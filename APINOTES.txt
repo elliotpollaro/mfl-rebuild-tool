@@ -1,0 +1,3764 @@
+11/6/24, 6:51 PM
+ Fantasy Football: MFL Developers Program
+ HOME MY ACCOUNT
+ SCORES
+ PLAYER RESEARCH
+ DRAFT/AUCTION
+ SOCIAL
+ HELP
+ elliotpollaro (
+ Logout)
+ WELCOME TO THE MYFANTASYLEAGUE.COM DEVELOPERS PROGRAM!
+ We want to thank you for your interest in the MyFantasyLeague.com Developers Program. The goal of this program is
+ to provide the tools for our community to enhance the overall experience and enjoyment of the entire MFL user base.
+ If you are a developer, these pages should provide you with all the information you need to create applications and
+ other enhancements using the MFL platform.
+ New! For a list of changes made for the 2022 season, please check the 
+2020 Release Notes are 
+here and 2019 Release Notes are 
+here
+ Release Notes (last updated on July 25, 2022).
+ Here is the overall information. You can get details on all the available calls on the 
+code or 
+test the requests.
+ General Rules and Terms of Service
+ Request Reference Page, view 
+sample
+ 1. Access to this data is provided free to anyone to use in almost any way. However, the following uses are
+ forbidden, whether deliberate or accidental:
+ Harvesting league and/or user data
+ Looking for loop holes or other ways to cheat or circumvent league rules
+ Overloading or disrupting the MFL service in any way that negatively impacts the normal operation of the
+ site.
+ Collecting user information without their permission, attempting to make or making changes to someone\'s
+ fantasy league/team without their permission.
+ Accessing the API via Javascript from web pages outside the myfantasyleague.com domain. Normal browser
+ security will prevent this from working and we will not put your domain in our cross-domain le to allow it.
+ 2. Access to this data is provided with the assumption that all developers will make their best e ort to comply with
+ the best practices listed here. Accidental or deliberate abuse of the service will not be tolerated.
+ 3. Your application will perform much better if you cache data whenever possible. For example, our player
+ database is only changed once a day, so your application should request that info no more than once a day and
+ keep it for that long. You should do the same with league data that doesn't change often, like league rules and
+ scoring systems.
+ 4. This service is o ered as is, without any guarantees expressed or implied. This service may be occassionally
+ unavailable, or change or may be discontinued at any time, without warning.
+ 5. If we determine that someone is abusing the system, whether deliberately or accidentally we may reject those
+ requests and/or take whatever action we deemed necessary. Just because we allowed it in the past is no
+ guarantee that we will allow it in the future.
+ 6. We will do our best to answer your question regarding our API's. However we can't explain how to make API calls
+ from your environment, or how to parse the results or any other details of how to use this data. Some help is
+ available on the Sample Code link on the main API documentation page
+ 7. We can not and will not under any circumstance make raw NFL player stats available, as that's forbidden per our
+ stats licensing agreement. Similarly, we can not make third party content (such as player news) available. If you
+ are interested in getting raw NFL stats, here are some a ordable options:
+ a. 
+FantasyData.com
+ b. 
+c. 
+Sportsradar
+ XML Team
+ 8. These terms may be changed at any time. Use of the service constitutes agreement to these terms. We reserve
+ the right to take whatever action we feel is warranted whenever anyone violates these terms.
+ https://www42.myfantasyleague.com/2024/api_info?L=
+ Basic Information
+ 1/5
+11/6/24, 6:51 PM
+ Fantasy Football: MFL Developers Program
+ In order to properly use the service you need to understand a few things about the requests you will be making,
+ spe cially the URL format. All requests URL will be of the form:
+ protocol://host/year/command?args
+ For example, in the request:
+ https://www44.myfantasyleague.com/2024/standings?L=80000&W=3
+ the elements of the request are:
+ protocol
+ : https
+ host
+ : www44.myfantasyleague.com
+ year
+ : 2024
+ command
+ : standings
+ args
+ : L=80000&W=3
+ Each of these will be described below in more detail.
+ The protocol can be http or https. MFL started to support the https protocol in 2017 and at this time most requests
+ can be made via either protocol. It is possible that in the next year we will require all API calls to be made in https so
+ you may want to start planning for that.
+ The host is the server where the league you are accessing lives. Our hosts at this time are of the form wwwXX where XX
+ is a 2-digit number. However that's likely to change in the near future. When you ask for a league information (via the
+ league
+ API) it will return the league's host. Similarly, when getting all the leagues a user has (the 
+myleague
+ call) or using
+ the league search functionality (the 
+leagueSearch
+ call), you will also receive the host information. You should save the
+ league's host for period of time, but note that leagues can be moved between hosts. Moving leagues is unusual but
+ does happen, specially if a server goes down or as we get ready for the start of the football season and need to balance
+ load across hosts. Best practice is to get the data and cache it for one session. Note that if you send a request to the
+ wrong host, the system will normally redirect the request to the proper server, but this operation may be delayed, or if
+ the system is under too much stress, it may be denied. In addition, if the request does not take a league parameter
+ (L=), it must be sent to the host api.
+ The year is fairly straight-forward. It refers to the season you are requesting data for. Note that January 2018 will still
+ be part of the 2017 season, so this is not the current year. Also, most API functionality is only supported for the current
+ year. We will not be adding features or xing issues related to queries that refer to past seasons.
+ The command speci es what direction the data ows. Most requests will fall into two categories: those requesting
+ data and those that will attempt to load data into the system. These requests use the commands 
+export
+ and 
+import
+ respectively. However, as listed on the 
+Request Reference Page, there are other commands that serve more speci c
+ purposes.
+ The args speci es the additional arguments for the request. The 
+export
+ and 
+import
+ commands require a request type,
+ speci ed via the TYPE argument. This indicates the actual data you want back or want to update.
+ All requests that operate on a league require a league argument (L). The second most common one is the week
+ argument (W), which is a number between 1 and 21. And nally the JSON argument should be set to 0 or 1 depending
+ if you want the output in XML (default) or JSON format. Additional request parameters are listed in the 
+Page.
+ User Agent And Client Registration
+ Request Reference
+ Starting in 2020 we will be monitoring and restricting usage of the API. This has become necessary because a number
+ of bad actors are abusing the system. While most of these cases are likely just users not knowing any better, a few have
+ been pretty clearly done with malicious intent.
+ 2/5
+ https://www42.myfantasyleague.com/2024/api_info?L=
+11/6/24, 6:51 PM
+ Fantasy Football: MFL Developers Program
+ The API will remain open as is always been. However, unregistered clients will be limited in the amount of requests
+ they can make. The actual limits will depend on a number of factors and won't be constant. The limits will only apply on
+ a per-IP address basis. So if your client is spread across many users, it won't be a ected by this. Thus mobile apps and
+ calls from within league pages should not a ected by this.
+ Registered clients will have higher limits, about 2.5X of the limits for un-registered clients. To have your client receive
+ the higher limits, you must:
+ 1. Register your client via 
+API Client Registration Page.
+ 2. Validate the client (this means that we will send a text to your cell phone number of record with a code on it that
+ you will then enter on the site)
+ 3. Pass the User-Agent you chose in the Client Registration on all API requests your client makes.
+ When you go over the limit, we will start throttling some requests from your client. The more you go over the limit, the
+ more requests will be throttled. Throttled requests will return a 429 "Too Many Requests" HTTP status code. Here's
+ some suggestions on what to do if you are hitting the limit:
+ 1. Space your requests out. This is the most important thing you can do. Wait one second between making
+ requests and you should be ok. We are not publishing what the limits are as they are not xed and will vary
+ depending on a lot of factors. For performance reasons we are not counting all requests, just a sample of them.
+ So the limits won't ever be exact.
+ 2. Cache the data so you don't have to request it as often. Some requests like players doesn't change often, so
+ don't request it often.
+ 3. Don't make unnecessary calls. Make calls depending on the point we are on the season. Asking for stats and
+ results for week 5 during week 3 makes no sense and yet there are a lot of such calls being made. Also
+ understand the league parameters. Don't ask for a league draft results when they do an auction.
+ 4. Avoid making calls during high-tra c times. For instance during the NFL season we may lower the thresholds
+ while games are going on. We may increase them during the late night/early morning hours.
+ 5. If the requests are not league-speci c, use api.myfantasyleague.com as the host. That will spread out your
+ requests across a number of servers. The limits are applied on a per server basis.
+ 6. If a request fails, don't retry. That will make things worse. If you can, check for the 429 status and if you get it,
+ cool things down a bit.
+ This is not a perfect system and if it turns out is not enough of a deterrent for these bad actors we will need to take
+ stronger measures. We hope it doesn't come to that.
+ Other Arguments And Values
+ Players
+ All requests involving players identify players by their player id. Our player ids are 4 or 5 digit numbers, but are treated
+ as strings internally. Ids under 1000 need a leading 0 (so the player id for the Baltimore Ravens defense is "0531", not
+ "531"). If you treat them as integers you will run into issues.
+ Franchises
+ Some requests allow you to specify a franchise id. Franchise ids are always 4-digit numeric strings, with leading zeros,
+ starting at "0001". Like player ids, franchise ids are strings, not numbers, so please make sure to treat them as such. In
+ some cases the value "0000" may be passed in to indicate a commissioner operation.
+ Timestamps
+ All timestamps are speci ed using the 
+standard Unix time format. Your application needs to be able to convert times in this
+ format to a user-readable form. The timestampts are always speci ed in the EST/EDT timezone.
+ Import Data
+ 3/5
+ https://www42.myfantasyleague.com/2024/api_info?L=
+11/6/24, 6:51 PM
+ Fantasy Football: MFL Developers Program
+ Some import requests require you to pass in an XML representation of the data being uploaded, via a eld called
+ 'DATA'. In most cases, you will need to properly encode this data so that special characters on it don't cause issues. It is
+ also recommended that you use a POST request in these cases as that would make things easier in the long run. GET
+ requests have length limits that can be exceeded very easily. With XML data is imperative that you get the formatting
+ right as well as the various element and attribute names. The data being imported would always be in the same format
+ as the corresponding export data.
+ Log In And Authorization
+ In order to access some league data, and to make any changes, your request must be properly authorized to access
+ and/or change this data. Authorization is handled via cookies. Your request must pass in the cookie of the user who is
+ performing the operation. Access will then be granted depending on the user's league privileges. Data from leagues
+ that are marked as PRIVATE are no longer accessible by users not in the league.
+ To pass the proper user cookie, you must rst programatically log the user in. You do this via the login API. The process
+ is as follows:
+ a. Prompt for the customer's username and password - you might want to do this similarly to how we do it on the
+ login page.
+ b. Programmatically call the login API at: 
+https://api.myfantasyleague.com/2024/login?
+ USERNAME=testuser&PASSWORD=testing&XML=1, passing in a valid username and password. You must use HTTPS for
+ this request to avoid exposing the user's credentials. For ease of illustrating this example, the request was
+ shown using the GET method. For better security we recommend you call it using the POST method. We may
+ stop supporting the GET method for login at any time.
+ c. If valid information is passed into the login program, the response will include a <status
+ cookie_name
+ ="
+ cookie_value
+ "...>.
+ d. If invalid information is passed into the login program, it will respond with an <error... status message.
+ e. The above cookie name/value pair should be passed back in as via a standard HTTP header 
+"Cookie: MFL_USER_ID=
+ cookie_value
+ " in all subsequent calls to the API.
+ cookie in the format:
+ f. Note that the cookie value is a Base64 string. That means it may contain the special symbols '+', '/' and/or '='.
+ Depending on your environment, you may need to explicitly URL-escape these symbols before passing them
+ back to us (e.g. converting '=' to '%3D').
+ Note that some requests require commissioner access. For these requests you must pass the cookie of a user with
+ commissioner access in that league. Requests that do not require commissioner access, when requested by a user who
+ has commissioner access will be performed on the commissioner's franchise. Some requests (not all) can also be
+ performed on behalf of another franchise by passing the FRANCHISE_ID parameter. If the commissioner does not have
+ a franchise and no franchise id is given, it will return an error.
+ To log a user out, all the client needs to do is discard the cookie, or stop sending it in the API requests. There's no need
+ to inform the server that this has ocurred so there's no corresponding logout API call.
+ Because sometimes is not possible to collect the user's credentials when making API requests we provide an alternate
+ way to authorize requests. Note that for security reasons, this alternate method does not work for import requests,
+ only export. It also does not work for requests that require Commissioner access (i.e. it's only valid for owners). To use
+ it, you may pass to any request that requires both a league id and is access-restricted (i.e. requires a user cookie), the
+ APIKEY parameter. The value for this parameter is user speci c. It may be accessed via javascript on any page on the
+ site when a user is logged in via the variable 
+apiKey
+ . Note that this API key is tied to a user/franchise/league
+ combination and does not work outside that context. If you pass both a cookie and the APIKEY parameter, the APIKEY
+ parameter will take precedence. This parameter is ignored on requests that don't require authorization.
+ You may also get your own API key and pass that on requests to your league. You are not logged as a franchise owner
+ currently so we can't show you your API Key. To do so, access this page from any of your leagues while logged in as an
+ owner, then click on the Help -> Developer's API link in the top menu bar.
+ 4/5
+ https://www42.myfantasyleague.com/2024/api_info?L=
+11/6/24, 6:51 PM
+ Fantasy Football: MFL Developers Program
+ Back To Top Of Page
+ Page Generated Wed Nov 6 7:51:02 p.m. ET 2024
+ Copyright © 1995-2024 
+Sideline Software, Inc.
+ All Rights Reserved. 
+Privacy Policy
+ - 
+Terms Of Service
+ - 
+Acceptable Use Policy
+ - Powered by: 
+Sportsradar
+ . 
+Disclaimer: This site is not in any way a liated with, endorsed or licensed by the National Football League, any NFL team or NFLPA member.
+ 5/5
+ https://www42.myfantasyleague.com/2024/api_info?L=
+11/6/24, 6:52 PM
+ Fantasy Football: MFL Developers Program
+ HOME MY ACCOUNT
+ SCORES
+ PLAYER RESEARCH
+ DRAFT/AUCTION
+ SOCIAL
+ HELP
+ elliotpollaro (
+ Logout)
+ MYFANTASYLEAGUE.COM DEVELOPERS PROGRAM API REFERENCE
+ Before you attempt to use this API, you should rst read the 
+the requests.
+ Show requests for command: 
+Export
+ Import
+ Misc
+ General Information Page. You can also view 
+These requests are invoked using the format 
+protocol
+ ://
+ host
+ /
+ year
+ /export?TYPE=
+ request_type
+ &
+ additional_args
+ EXPORT REQUESTS
+ REQUEST TYPE
+ Common League Info
+ league
+ DESCRIPTION
+ General league setup parameters for a given
+ league, including: league name, roster size, IR/TS
+ size, starting and ending week, starting lineup
+ requirements, franchise names, division names,
+ and more. If you pass the cookie of a user with
+ commissioner access, it will return otherwise
+ private owner information, like owner names,
+ email addresses, etc. 
+Test it!
+ rules
+ rosters
+ freeAgents
+ Personal user information, like name and email
+ addresses only returned to league owners.
+ League scoring rules for a given league. To
+ understand the scoring rule abbreviations in this
+ document, see the allRules document type
+ above. 
+Test it!
+ The current rosters for all franchises in a league,
+ including player status (active roster, IR, TS), as
+ well as all salary/contract information for that
+ player. 
+Test it!
+ ARGUMENTS
+ L
+ League Id(required)
+ sample code or 
+test
+ L
+ L
+ League Id(required)
+ League Id(required)
+ FRANCHISE When set, the response will
+ include the current roster
+ of just the speci ed
+ franchise.
+ W
+ Test it!
+ Fantasy free agents for a given league. 
+Private league access restricted to league owners.
+ L
+ If the week is speci ed, it
+ returns the roster for that
+ week. The week must be
+ less than or equal to the
+ upcoming week. Changes to
+ salary and contract info is
+ not tracked so those elds
+ (if used) always show the
+ current values.
+ League Id(required)
+ POSITION Return only players from this
+ position.
+ https://api.myfantasyleague.com/2024/api_info?STATE=details
+ 1/13
+schedule The fantasy schedule for a given league/week.
+ Weeks in the past will show the score of each
+ matchup. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ W Week. If a week is speci ed, it
+ returns the fantasy schedule for
+ that week, otherwise the full
+ schedule is returned.
+ F Franchise ID. If a franchise id is
+ speci ed, the schedule for just
+ that franchise is returned.
+ calendar Returns a summary of the league calendar
+ events. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ playo Brackets All playo brackets for a given league. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ playo Bracket Returns the games (with results if available) of the
+ speci ed playo bracket. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ BRACKET_IDThe bracket id to return
+ the info
+ Transactions
+ transactions All non-pending transactions for a given league.
+ Note that this can be a very large set, so it's
+ recommended that you lter the result using one
+ or more of the available parameters. If the
+ request comes from an owner in the league, it will
+ return the pending transactions for that owner's
+ franchise. If it comes from the commissioner, it
+ will return all pending transactions. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ W If the week is speci ed, it
+ returns the transactions
+ for that week.
+ TRANS_TYPEReturns only transactions
+ of the speci ed type.
+ Types are: WAIVER,
+ BBID_WAIVER,
+ FREE_AGENT,
+ WAIVER_REQUEST,
+ BBID_WAIVER_REQUEST,
+ TRADE, IR, TAXI,
+ AUCTION_INIT,
+ AUCTION_BID,
+ AUCTION_WON,
+ SURVIVOR_PICK,
+ POOL_PICK. You may also
+ specify a value of * to
+ indicate all transaction
+ types or DEFAULT for the
+ default transaction type
+ set. Or you can ask for
+ multiple types by
+ separating them with
+ commas.
+ FRANCHISE When set, returns just the
+ transactions for the
+ speci ed franchise.
+ DAYS When set, returns just the
+ transactions for the
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 2/13
+number of days speci ed
+ by this parameter.
+ COUNT Restricts the results to just
+ this many entries. Note
+ than when this eld is
+ speci ed, only
+ transactions from the
+ most common types are
+ returned.
+ pendingWaivers Pending waivers that the current franchise has
+ submitted, but have not yet been processed. 
+Test
+ it!
+ Access restricted to league owners.
+ L League Id(required)
+ FRANCHISE_IDWhen request comes
+ from the league
+ commissioner, this
+ indicates which
+ franchise they want.
+ pendingTrades Pending trades that the current franchise has
+ o ered to other franchises, or has been o ered
+ to by other franchises. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ FRANCHISE_IDWhen request comes
+ from the league
+ commissioner, this
+ indicates which
+ franchise they want.
+ Pass in '0000' to get
+ trades pending
+ commissioner action).
+ tradeBait The Trade Bait for all franchises in a league. 
+Test
+ it!
+ Private league access restricted to league owners.
+ L League
+ Id(required)
+ INCLUDE_DRAFT_PICKSWhen set, this
+ will also return
+ draft picks
+ o ered. Current
+ year draft picks
+ look like
+ DP_02_05 which
+ refers to the
+ 3rd round 6th
+ pick (the round
+ and pick values
+ in the string are
+ one less than
+ the actual
+ round/pick). For
+ future years
+ picks, they are
+ identi ed like
+ FP_0005_2018_2
+ where 0005
+ referes to the
+ franchise id
+ who originally
+ owns the draft
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 3/13
+pick, then the
+ year and then
+ the round (in
+ this case the
+ rounds are the
+ actual rounds,
+ not one less).
+ This also
+ includes Blind
+ Bid dollars (in
+ leagues that
+ use them),
+ which will be
+ speci ed as
+ BB_10 to
+ indicate $10 in
+ blind bid
+ dollars.
+ assets All tradable assets (players, current year draft
+ picks, future draft picks) for a given league. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ Scoring and Results
+ leagueStandings The current league standings for a given league.
+ The elds returned for each franchise match the
+ columns included in the league standings report. Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ COLUMN_NAMESWhen set to a non
+zero value, returns a
+ mapping of column
+ keys to column
+ names. This also
+ shows the proper
+ order of the
+ standings columns.
+ ALL When set to a non
+zero value, returns
+ additional standings
+ eld values that are
+ not part of the league
+ standings report but
+ are important for
+ sorting league
+ standings. Note that
+ some of these extra
+ elds may not be
+ relevant for all
+ leagues and may
+ include duplicate info
+ from the basic set.
+ WEB When set to a non
+zero value, returns
+ the columns shown
+ on the web site only.
+ This is in case the app
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 4/13
+wants to just
+ replicate the report
+ from the web site.
+ This parameter is
+ ignored if ALL is set.
+ weeklyResults The weekly results for a given league/week,
+ including the scores for all starter and non-starter
+ players for all franchises in a league. The "W"
+ parameter can be "YTD" to give all year-to-date
+ weekly results. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ W If the week is
+ speci ed, it returns
+ the data for that
+ week, otherwise the
+ most current data is
+ returned. If the value
+ is 'YTD', then it returns
+ year-to-date data (or
+ the entire season
+ when called on
+ historical leagues).
+ MISSING_AS_BYE If set to 1, fantasy
+ teams with no
+ scheduled opponents
+ will be shown as
+ playing vs a BYE
+ opponent.
+ liveScoring Live scoring for a given league and week,
+ including each franchise's current score, how
+ many game seconds remaining that franchise
+ has, players who have yet to play, and players
+ who are currently playing. 
+Test it!
+ L League Id(required)
+ W If the week is speci ed, it
+ returns the data for that week,
+ otherwise the most current
+ data is returned.
+ DETAILSSetting this argument to 1 will
+ return data for non-starters as
+ well
+ playerScores All player scores for a given league/week,
+ including all rostered players as well as all free
+ agents. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ W If the week is speci ed, it
+ returns the data for that
+ week, otherwise the current
+ week data is returned. If the
+ value is 'YTD', then it returns
+ year-to-date data. If the value
+ is 'AVG', then it returns a
+ weekly average.
+ YEAR The year for the data to be
+ returned.
+ PLAYERS Pass a list of player ids
+ separated by commas (or
+ just a single player id) to
+ receive back just the info on
+ those players.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 5/13
+POSITIONReturn only players from this
+ position.
+ STATUS If set to 'freeagent', returns
+ only players that are fantasy
+ league free agents.
+ RULES If set, and a league id passed,
+ it re-calculates the fantasy
+ score for each player
+ according to that league's
+ rules. This is only valid when
+ specifying the current year
+ and current week.
+ COUNT Limit the result to this many
+ players.
+ projectedScores Given a player ID, calculate the expected fantasy
+ points, using that league's scoring system. The
+ system will use the raw stats that
+ fantasysharks.com projects. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ W If the week is speci ed, it
+ returns the projected scores
+ for that week, otherwise the
+ upcoming week is used.
+ PLAYERS Pass a list of player ids
+ separated by commas (or
+ just a single player id) to
+ receive back just the info on
+ those players.
+ POSITIONReturn only players from this
+ position.
+ STATUS If set to 'freeagent', returns
+ only players that are fantasy
+ league free agents (note that
+ this refers to players that
+ current free agents, not that
+ were free agents during the
+ speci ed week).
+ COUNT Limit the result to this many
+ players.
+ Draft & Auction
+ draftResults Draft results for a given league. Note that this
+ data may be up to 15 minutes delayed as it is
+ meant to display draft results after a draft is
+ completed. To access this data while drafts are in
+ progress, check out 
+this FAQ
+ . 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ auctionResults Auction results for a given league. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ selectedKeepers Currently selected keepers. Returns only own's
+ franchise keepers. For commissioner returns all
+ franchises unless Lockout is on. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ FRANCHISEWhen set, returns just the
+ keepers for the speci ed
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 6/13
+franchise (only for
+ commissioner).
+ myDraftList My Draft List for the current franchise. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ Communications
+ messageBoard Display a summary of the recent message board
+ posts to a league message board. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ COUNT If speci ed, limit the number of
+ threads to display to this value.
+ Default is 10.
+ messageBoardThreadDisplay posts in a thread from a league message
+ board. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ THREADThread id (required).
+ polls All current league polls with details as to which
+ polls the current franchise voted on. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ device_tokens Returns the device tokens for the current user. Test it!
+ League Players
+ playerRosterStatus Get the player's current roster status. The
+ franchise(s) the player is on are listed in the
+ subelement. There may more than one of this for
+ leagues that have multiple copies of players. Each
+ of this elements will have a franchise id and
+ status attribute. The status attribute can be one
+ of: R (roster), S (starter), NS (non-starter), IR
+ (injured reserve) or TS (taxi squad). The R value is
+ only provided when there's no lineup submitted
+ or the caller has no visibility into the lineup. If the
+ player is a free agent, there will be a 'is_fa'
+ attribute on the parent element. In those cases
+ the elements 'cant_add' and 'locked' attributes
+ may be set indicating whether a player can't be
+ added or is locked. 
+Test it!
+ L League Id(required)
+ P Player id or list of player ids
+ separated by commas (required).
+ W Week. If a week is speci ed, it
+ returns the player status for that
+ week. The default is the current
+ Live Scoring week.
+ F Franchise it. If present it uses the
+ franchise id to determine which
+ conference or division to use for
+ the purposes of identifying free
+ agents. If not present it uses the
+ user's franchise id. Only matters
+ on deluxe leagues.
+ myWatchList My Watch List for the current franchise. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ contestPlayers On Contest Leagues, this returns all players
+ eligible to be in a franchise's starting lineup. While
+ this request can be used by any league it's best
+ suited for leagues with the loadRosters setting set
+ to either 'contest' or 'setem'. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ W Week. If a week is speci ed, it
+ returns the players for that week.
+ The default is the upcoming
+ week.
+ F Franchise it. If present it returns
+ the players eligible for that
+ franchise. Only matters when
+ called by the commissioner.
+ When called by an owner, this
+ parameter is ignored and the
+ owner's franchise is used.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 7/13
+salaries The current player salaries and contract elds.
+ Only players with values are returned. If a value is
+ empty it means that the default value is in e ect.
+ The default values are speci ed under the player
+ id '0000'. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ salaryAdjustments All extra salary adjustments for a given league. Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ Other League Info
+ futureDraftPicks Future draft picks for a given league. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ accounting Returns a summary of the league accounting
+ records. In the response, negative amounts are
+ charges against the franchise while positive
+ amounts is money paid by the franchise or owed
+ to the franchise. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ pool All NFL or fantasy pool picks for a given league. Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ POOLTYPEWhich pool picks to return.
+ Valid values are "NFL"
+ (default) or "Fantasy".
+ survivorPool All survivor pool picks for a given league. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ abilities Returns the abilities of the current franchise. A
+ value of 0 means the franchise does not have the
+ ability and a value of 1 means it has the ability. Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ F Franchise ID. When the
+ request comes from the
+ commissioner, this indicates
+ which franchise's abilities to
+ return. It's ignored if the
+ request comes from an owner.
+ DETAILS If set to a non-zero/empty
+ value, includes the abilities
+ descriptions.
+ appearance The skin, home page tabs, and modules within
+ each tab set up by the commissioner for a given
+ league. 
+Test it!
+ L League Id(required)
+ rss An RSS feed of key league data for a given league,
+ including: league standings, current week's live
+ scoring, last week's fantasy results, and the ve
+ newest message board topics. 
+Test it!
+ Private league access restricted to league owners.
+ L League Id(required)
+ ics Returns a summary of the league calendar in .ics
+ format, which is suitable for importing into many
+ modern calendaring programs, like Apple's
+ Calendar, Google Calendar, Microsoft Outlook,
+ and more. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 8/13
+User Functions
+ myleagues All of the leagues of the current user. 
+Test it!
+ Private league access restricted to league owners.
+ Personal user information, like name and email
+ addresses only returned to league owners.
+ YEAR Returns the data
+ for the speci ed
+ year. Default is
+ current year.
+ FRANCHISE_NAMESSet this argument
+ to 1 to include the
+ franchise names in
+ the response. Note
+ that when this
+ parameter is set,
+ and the user has a
+ lot of leagues, this
+ response may take
+ a long time to
+ process and time
+ out.
+ leagueSearch Searches for leagues in our database that match
+ either the given league id or whose name
+ matches the speci ed string. Either the SEARCH
+ or ID paramater must be speci ed, but not both. Test it!
+ SEARCHCase-insensitive string to
+ search for. Must be at least 3
+ characters long.
+ ID 4 or 5-digit number to return
+ the league with this id.
+ YEAR Year to search, default is the
+ year in the URL.
+ Fantasy Content
+ players All player IDs, names and positions that
+ MyFantasyLeague.com has in our database for
+ the current year. All other data types refer only to
+ player IDs, so if you'd like to later present any
+ data to people, you'll need this data type for
+ translating player IDs to player names. Our player
+ database is updated at most once per day, and it
+ contains more than 2,000 players - in other
+ words, you're strongly encouraged to read this
+ data type no more than once per day, and store it
+ locally as needed, to optimize your system
+ performance. 
+Test it!
+ L League Id(optional)
+ DETAILS Set this value to 1 to return
+ complete player details,
+ including player IDs from
+ other sources.
+ SINCE Pass a unix timestamp via this
+ parameter to receive only
+ changes to the player
+ database since that time.
+ PLAYERSPass a list of player ids
+ separated by commas (or just
+ a single player id) to receive
+ back just the info on those
+ players.
+ playerPro le Returns a summary of information regarding a
+ player, including DOB, ADP ranking,
+ height/weight. 
+Test it!
+ P Player id or list of player ids
+ separated by commas (required).
+ allRules All scoring rules that MyFantasyLeague.com
+ currently supports, including: if the rule is scored
+ for players, teams or coaches, as well as an
+ abbreviation of the scoring rule, a short
+ description, and a detailed description. If you plan
+ on using the 'rules' data type, you'll also need this
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 9/13
+data type to look up the abbreviations to
+ translate them to their detailed description for
+ people. 
+Test it!
+ playerRanks This report provides overall player rankings from
+ the experts at FantasySharks.com. These rankings
+ can be used instead of Average Draft Position
+ (ADP) rankings for guidance during your draft, or
+ when generating your own draft list. 
+Test it!
+ POS Return only players at this
+ position.
+ SOURCEWhich player ranks source to
+ use, default is 'sharks')
+ adp
+ ADP
+ results, including when the result were last
+ updated, how many drafts the player was
+ selected in, the average pick, minimum pick and
+ maximum pick. 
+Test it!
+ PERIOD This returns draft data for
+ just drafts that started after
+ the speci ed period. Valid
+ values are ALL, RECENT,
+ DRAFT, JUNE, JULY, AUG1,
+ AUG15, START, MID,
+ PLAYOFF. This option is not
+ valid for previous seasons.
+ FCOUNT This returns draft data from
+ just leagues with this
+ number of franchises. Valid
+ values are 8, 10, 12, 14 or 16.
+ If the value is 8, it returns
+ data from leagues with 8 or
+ less franchises. If the value is
+ 16 it returns data from
+ leagues with 16 or more
+ franchises.
+ IS_PPR Filters the data returned as
+ follows: If set to 0, data is
+ from leagues that not use a
+ PPR scoring system; if set to
+ 1, only from PPR scoring
+ system; if set to -1 (or not
+ set), all leagues.
+ IS_KEEPERPass a string with some
+ combination of N, K and R: if
+ N speci ed, returns data
+ from redraft leagues, if 'K' is
+ speci ed, returns data for
+ keeper leagues and if 'R' is
+ speci ed, return data from
+ rookie-only drafts. You can
+ combine these. If you specify
+ 'KR' it will return rookie and
+ keeper drafts only. Default is
+ 'NKR'.
+ IS_MOCK If set to 1, returns data from
+ mock draft leagues only. If
+ set to 0, excludes data from
+ mock draft leagues. If set to-1, returns all
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 10/13
+CUTOFF Only returns data for players
+ selected in at least this
+ percentage of drafts. So if
+ you pass 10, it means that
+ players selected in less than
+ 10% of all drafts will not be
+ returned. Note that if the
+ value is less than 5, the
+ results may be
+ unpredicatble.
+ DETAILS If set to 1, it returns the
+ leagues that were included
+ in the results. This option
+ only works for the current
+ season.
+ aav
+ AAV
+ results, including when the result were last
+ updated, how many auctions the player was
+ selected in and the average auction value.
+ Average auction value is relative to an auction
+ where a total of $1000 is available across all
+ franchises. 
+Test it!
+ PERIOD This returns auction data for
+ just auctions that started
+ after the speci ed period.
+ Valid values are ALL,
+ RECENT, DRAFT, JUNE, JULY,
+ AUG1, AUG15, START, MID,
+ PLAYOFF. This option is not
+ valid for previous seasons.
+ IS_PPR Filters the data returned as
+ follows: If set to 0, data is
+ from leagues that not use a
+ PPR scoring system; if set to
+ 1, only from PPR scoring
+ system; if set to -1 (or not
+ set), all leagues.
+ IS_KEEPERPass a string with some
+ combination of N, K and R: if
+ N speci ed, returns data
+ from redraft leagues, if 'K' is
+ speci ed, returns data for
+ keeper leagues and if 'R' is
+ speci ed, return data from
+ rookie-only drafts. You can
+ combine these. If you specify
+ 'KR' it will return rookie and
+ keeper drafts only. Default is
+ 'NKR'.
+ topAdds The most added players across all
+ MyFantasyLeague.com-hosted leagues during the
+ current week (or the past 7 days during the pre
+season), as well as the percentage of leagues that
+ they've been added in. Only players that have
+ been added in at least 1% of our leagues will be
+ returned. This data would be helpful in creating
+ some sort of "Who's Hot?" list. 
+Test it!
+ COUNT Limits the result to this many
+ players.
+ STATUSSet this value to 
+FA
+ to only
+ return available free agents.
+ This option is not available for
+ deluxe leagues.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 11/13
+topDrops The most dropped players across all
+ MyFantasyLeague.com-hosted leagues during the
+ current week (or the past 7 days during the pre
+season), as well as the percentage of leagues that
+ they've been dropped in. Only players that have
+ been dropped in at least 1% of our leagues will be
+ displayed. This data would be helpful in creating
+ some sort of "Who's Cold?" list. 
+Test it!
+ COUNT Limits the result to this many
+ players.
+ STATUSSet this value to 
+FA
+ to only
+ return available free agents.
+ This option is not available for
+ deluxe leagues.
+ topStarters The most started players across all
+ MyFantasyLeague.com-hosted leagues for the
+ current week, as well as the percentage of
+ leagues that they've been started in. Only players
+ that have been started in at least 1% of our
+ leagues will be displayed. 
+Test it!
+ COUNT Limits the result to this many
+ players.
+ STATUSSet this value to 
+FA
+ to only
+ return available free agents.
+ This option is not available for
+ deluxe leagues.
+ topTrades The most traded players across all
+ MyFantasyLeague.com-hosted leagues in the
+ current week (or past 7 days during the pre
+season), as well as the percentage of leagues that
+ they have been traded in. Only players that are
+ traded in more than 0.25% of our leagues will be
+ displayed. 
+Test it!
+ COUNT Limits the result to this many
+ players.
+ topOwns The most owned players across all
+ MyFantasyLeague.com-hosted leagues, as well as
+ the percentage of leagues that they're owned in.
+ Only players that are owned in more than 2% of
+ our leagues will be displayed. 
+Test it!
+ COUNT Limits the result to this many
+ players.
+ STATUSSet this value to 
+FA
+ to only
+ return available free agents.
+ This option is not available for
+ deluxe leagues.
+ siteNews An RSS feed of MyFantayLeague.com site news. Test it!
+ whoShouldIStart Site-wide 'Who Should I Start?' data - o ering a
+ comparison between any two players at the same
+ position, letting you know what percent of all MFL
+ customers would choose one player over another
+ player. There's two versions of this API. When
+ specifying a league id (and franchise id) it will
+ return the data for the given franchise. When a
+ league id is not speci ed, use the PLAYERS
+ parameter to pass a list of players to return. 
+Test
+ it!
+ Access restricted to league owners.
+ L League Id(optional)
+ WEEK Show the results for the
+ speci ed week.
+ FRANCHISE If a league id is speci ed,
+ show the results for the
+ given franchise's roster,
+ otherwise the caller's
+ franchise.
+ PLAYERS If speci ed and FRANCHISE
+ not speci ed, lter the
+ results to the passed player
+ ids (separated by commas).
+ NFL Content
+ injuries The player ID, status (IR, Out, Doubtful,
+ Questionable, Inactive, etc.) and details (i.e.,
+ 'Knee', 'Foot', 'Ribs', etc.) of all players on the NFL
+ injury report. The report data is updated daily
+ during the season and pre-season. The
+ W If the week is not speci ed, it
+ defaults to the most recent week
+ that injury data is available.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details 12/13
+11/6/24, 6:52 PM
+ Fantasy Football: MFL Developers Program
+ timestamp attribute tells you the last time this
+ data was updated. 
+Test it!
+ n Schedule
+ n ByeWeeks
+ pointsAllowed
+ The NFL schedule for one week of the season,
+ including the scheduled kicko of the game,
+ home team (and their score), the away team (and
+ their score). Starting with the 2020 season, this
+ request will no longer update while games are in
+ progress and it's meant to be used to get the NFL
+ schedule. To obtain the current scores of games,
+ please check out 
+this FAQ
+ . 
+Test it!
+ Test it!
+ The bye weeks for every NFL team. 
+Test it!
+ Fantasy points allowed by each NFL team, broken
+ out by position. 
+Back To Top Of Page
+ W If the week is not speci ed, it
+ defaults to the current week. If
+ set to 'ALL', it returns the full
+ season schedule.
+ W If the week is speci ed, it returns
+ just the teams with a bye in that
+ week.
+ L
+ League Id(required)
+ Page Generated Wed Nov 6 7:51:57 p.m. ET 2024
+ Copyright © 1995-2024 
+Sideline Software, Inc.
+ All Rights Reserved. 
+Privacy Policy
+ - 
+Terms Of Service
+ - 
+Acceptable Use Policy
+ - Powered by: 
+Sportsradar
+ . 
+Disclaimer: This site is not in any way a liated with, endorsed or licensed by the National Football League, any NFL team or NFLPA member.
+ 13/13
+ https://api.myfantasyleague.com/2024/api_info?STATE=details
+11/6/24, 6:52 PM
+ Fantasy Football: MFL Developers Program
+ HOME MY ACCOUNT
+ SCORES
+ PLAYER RESEARCH
+ DRAFT/AUCTION
+ SOCIAL
+ HELP
+ elliotpollaro (
+ Logout)
+ MYFANTASYLEAGUE.COM DEVELOPERS PROGRAM API REFERENCE
+ Before you attempt to use this API, you should rst read the 
+the requests.
+ Show requests for command: 
+Export
+ Import
+ Misc
+ General Information Page. You can also view 
+These requests are invoked using the format 
+protocol
+ ://
+ host
+ /
+ year
+ /import?TYPE=
+ request_type
+ &
+ additional_args
+ IMPORT REQUESTS
+ REQUEST TYPE
+ Common League Info
+ lineup
+ franchises
+ DESCRIPTION
+ Import a franchise's starting lineup. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ sample code or 
+test
+ Test it!
+ Loads franchise names, graphics, contact information, and more. 
+Access Restricted: Requires cookie from league commissioner.
+ https://api.myfantasyleague.com/2024/api_info?STATE=details#
+ 1/10
+calendarEvent Import an event to a league calendar. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ Transactions
+ fcfsWaiver Import an add/drop move that will be executed immediately (also known as a rst-come,
+ rst-serve move). You may also use this call to drop multiple players at once. At least one
+ player to be added or dropped is required. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ waiverRequest Import one round's worth of waiver requests. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 2/10
+blindBidWaiverRequest Import blind bidding waiver requests. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 3/10
+ir Import an IR (activate/deactivate) move. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ taxi_squad Import a Taxi Squad (promote/demote) move. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ tradeProposal Propose a trade to another franchise. The WILL_GIVE_UP and WILL_RECEIVE parameters
+ can also contain draft picks if the league allows draft pick trading. Current year draft picks
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 4/10
+are speci ed like DP_02_05 which refers to the 3rd round 6th pick (the round and pick
+ values in the string are one less than the actual round/pick). For future years picks, they
+ are identi ed like FP_0005_2018_2 where 0005 referes to the franchise id who originally
+ owns the draft pick, then the year and then the round (in this case the rounds are the
+ actual rounds, not one less). If the league uses Blind Bidding and allows trading of blind
+ bid dollars, you can specify like BB_10.50, which means $10.50 worth of blind bid dollars. Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ tradeResponse Respond to an existing trade o er. See the tradeProposal request above for info
+ regarding draft pick trading. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 5/10
+tradeBait Import an owner's trade bait, which will overwrite his previously entered trade bait. 
+Test
+ it!
+ Access restricted to league owners.
+ Draft & Auction
+ draftResults Loads draft order and actual draft results. All previously existing draft results will be
+ completely deleted from the system when importing draft results. Note that this is
+ meant to be used to load the results of an o ine draft all at once, not to implement a live
+ draft application. An additional attribute called 'status' is supported on each draft pick
+ element, allowing you to indicate the status of the player upon import. The valid values
+ are: ROSTER, TAXI_SQUAD, or INJURED_RESERVE. If no status is indicated, it defaults to
+ ROSTER. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ auctionResults Auction results. This is meant to be used to load the results of an o ine draft all at once,
+ not to implement a live draft application. An additional attribute called 'status' is
+ supported on each auction element, allowing you to indicate the status of the player
+ upon import. Valid values are: ROSTER, TAXI_SQUAD, or INJURED_RESERVE. If no status is
+ indicated, it defaults to ROSTER. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 6/10
+myDraftList Set the players in an owner's My Draft List. This will completely overwrite an owners
+ previous My Draft List. 
+Test it!
+ Access restricted to league owners.
+ Communications
+ messageBoard Start a message board thread or reply to an existing message board thread. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ pollVote Import a vote in a league poll. 
+Test it!
+ Access restricted to league owners.
+ emailMessage Send an email message to one or all the owners in the league. 
+Test it!
+ Access restricted to league owners.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 7/10
+add_device_token Registers a device token for the given user. Used to send noti cations via a mobile app.
+ Accessed restricted to logged in users. 
+Test it!
+ League Players
+ salaries XML string representing the player salaries. The format for this data is
+ <salaries>
+ <leagueUnit unit="LEAGUE">
+ <player id="9823" salary="11" contractStatus="A" contractYear="1"
+        contractInfo="info" />
+ <player id="8670" salary="7.56" contractYear="2" contractInfo="more info" />
+ ...
+ </leagueUnit>
+ </salaries>
+ The valid attributes in the player elements depend on the league salary settings. If a
+ setting is turned o in the Salary Cap Setup page, it will not be imported. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ salaryAdj XML string representing the salary adjustments. The format for this data is
+ <salary_adjustments>
+ <salary_adjustment franchise_id="0001" amount="5.75"
+                   explanation="$5.75 fine for being late to draft."/>
+ <salary_adjustment franchise_id="0007" amount="-3.00" 
+                   explanation="$3 credit for some reason."/>
+ ...
+ </salary_adjustments>
+ For all adjustments, the franchise_id, amount and explanation elds are required and
+ must not be empty. Use a negative amount to credit the franchise (i.e. reduce their
+ salary). The data will always be added to the existing salary adjustments. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ playerScoreAdjustment Import one player score adjustment record. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ keepers Import an owner's keeper selections. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 8/10
+myWatchList Update the players in an owner's My Watch List. 
+Test it!
+ Access restricted to league owners.
+ Other League Info
+ accounting Import one accounting record. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ franchiseScoreAdjustment Import one franchise score adjustment record. 
+Test it!
+ Access Restricted: Requires cookie from league commissioner.
+ poolPicks Make an NFL or Fantasy pool pick. To send the actual picks you need to pass a number of
+ PICK and RANK parameters. These have names like PICKDAL,NYG and RANKDAL,NYG. For
+ example, in a game where the Cowboys are playing at the Giants, and you want to
+ indicate with a condence level of 16 that the Giants will win, the two name/value pairs
+ that must be passed in are PICKDAL,NYG=NYG and RANKDAL,NYG=16. This needs to be
+ repeated for all matchups (fantasy or NFL) for the week in question. For fantasy pool
+ picks, the franchise ids are used instead of NFL team abbreviations.
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 9/10
+survivorPoolPick Import a survivor pool pick. 
+Test it!
+ Access restricted to league owners.
+ Commissioner can impersonate owner using FRANCHISE_ID paramter.
+ Back To Top Of Page
+ Page Generated Wed Nov 6 7:51:57 p.m. ET 2024
+ Copyright © 1995-2024 
+Sideline Software, Inc.
+ All Rights Reserved. 
+Privacy Policy
+ - 
+Terms Of Service
+ - 
+Acceptable Use Policy
+ - Powered by: 
+Sportsradar
+ . 
+Disclaimer: This site is not in any way a liated with, endorsed or licensed by the National Football League, any NFL team or NFLPA member.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 10/10
+11/6/24, 6:52 PM
+ Fantasy Football: MFL Developers Program
+ HOME MY ACCOUNT
+ SCORES
+ PLAYER RESEARCH
+ DRAFT/AUCTION
+ SOCIAL
+ HELP
+ elliotpollaro (
+ Logout)
+ MYFANTASYLEAGUE.COM DEVELOPERS PROGRAM API REFERENCE
+ Before you attempt to use this API, you should rst read the 
+the requests.
+ Show requests for command: 
+Export
+ Import
+ Misc
+ General Information Page. You can also view 
+Unless otherwise speci ed, these requests are invoked using the format 
+protocol
+ ://
+ host
+ /
+ year
+ /
+ request
+ ?
+ args
+ MISC REQUESTS
+ REQUEST
+ Draft & Auction
+ live_draft
+ DESCRIPTION
+ Attempts to draft the speci ed player or otherwise control the draft timer.
+ When making a pick, the round and pick parameters (and the franchise id
+ if required) must match the current "On The Clock" info. They can not be
+ used to change earlier or later picks. For more info, check 
+this FAQ
+ . 
+Access restricted to league owners.
+ Test it!
+ L
+ CMD
+ sample code or 
+ARGUMENTS
+ test
+ League
+ Id(required)
+ This needs t
+ be set to
+ "DRAFT" to
+ make a draf
+ pick. It may
+ also be set t
+ "PAUSE" or
+ "RESUME"
+ which pause
+ or resumes
+ the draft or
+ "SKIP" or
+ "UNDO" whi
+ skips the
+ current pick
+ or undoes th
+ last pick. All
+ commands
+ other than
+ "DRAFT" are
+ available to
+ the
+ commission
+ only.
+ PLAYER_PICK
+ The player id
+ of the playe
+ to draft
+ (required fo
+ CMD=DRAFT
+ FRANCHISE_PICK When makin
+ a draft pick, 
+will use the
+ https://api.myfantasyleague.com/2024/api_info?STATE=details#
+ 1/3
+franchise id 
+the user
+ submitting t
+ request. If th
+ request is
+ sent by the
+ commission
+ then this
+ parameter is
+ required to
+ specify the
+ franchise id
+ making the
+ pick.
+ ROUND The draft
+ round
+ number for
+ the draft pic
+ (required fo
+ CMD=DRAFT
+ PICK The pick
+ number
+ within the
+ current roun
+ for the draft
+ pick (require
+ for
+ CMD=DRAFT
+ COMMENTS Optional
+ comments t
+ be included
+ with the pick
+ Meant for
+ email drafts
+ but accepted
+ for live draft
+ too.
+ Comments
+ will not be
+ shown in rea
+ time on the
+ live draft
+ room.
+ JSON If set to 1, th
+ result is
+ returned in
+ JSON format
+ XML If set to 1, th
+ result is
+ returned in
+ XML format.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 2/3
+Communications
+ chat_save Posts a message to the league chat. Note that there's no API to get the
+ chat messages. Those are available via the XML le located at
+ http://
+ HOST
+ .myfantasyleague.com/ netdynamic
+ YEAR
+ /
+ LEAGUE_ID
+ _chat.xml.
+ You must replace 
+HOST
+ , 
+YEAR
+ and 
+LEAGUE_ID
+ with the proper values. This
+ le might not exist if no chat messages have been written to your league,
+ so your client needs to handle a 404 (page not found) response. 
+Test it!
+ Access restricted to league owners.
+ L League Id(required)
+ MESSAGEA URL-encoded stri
+ that will be posted t
+ the league chat.
+ (Spaces are
+ represented by +
+ signs, all other non
+alphanumeric
+ characters should b
+ encoded as %.
+ (required)
+ TO_FID Optional argument
+ that if speci ed
+ makes the message
+ only visible to the
+ given franchise id.
+ User Functions
+ login Validates a set of user credentials (username/password) and if valid,
+ returns the cookie for that user. Note that this request should be sent via
+ HTTPS and using the POST method to avoid exposing the user credentials
+ on insecure networks. Support for this API via GET may be discontinued at
+ any point. More info is 
+available here
+ . 
+Test it!
+ USERNAME The login usernam
+ (required).
+ PASSWORDThe login passwo
+ (required).
+ XML This needs to be s
+ to 1 to avoid
+ returning a full
+ HTML page
+ (required).
+ NFL Content
+ m_status Returns the current week and other related variables. Use this in order to
+ tell what is the current week. To access this use https://api.myfantasyleague.com/ netdynamic2024/m_status.xml
+ . A JSON
+ option is also available (use .json instead of .xml.)
+ n _sched Returns the full NFL schedule. Data for in-progress games updates every
+ 15 minutes. To access this use: https://api.myfantasyleague.com/ netdynamic2024/n _sched.xml
+ . A JSON
+ option is also available (use .json instead of .xml.)
+ n _sched_XReturns the NFL schedule for week X. Data for in-progress games updates
+ every 15 minutes. To access this for week 1 use: https://api.myfantasyleague.com/ netdynamic2024/n _sched_1.xml
+ .
+ Replace the '1' with a di erent week number to get the appropriate week
+ schedule. A JSON option is also available (use .json instead of .xml.)
+ Back To Top Of Page
+ Page Generated Wed Nov 6 7:51:57 p.m. ET 2024
+ Copyright © 1995-2024 
+Sideline Software, Inc.
+ All Rights Reserved. 
+Privacy Policy
+ - 
+Terms Of Service
+ - 
+Acceptable Use Policy
+ - Powered by: 
+Sportsradar
+ . 
+Disclaimer: This site is not in any way a liated with, endorsed or licensed by the National Football League, any NFL team or NFLPA member.
+ 11/6/24, 6:52 PM Fantasy Football: MFL Developers Program
+ https://api.myfantasyleague.com/2024/api_info?STATE=details# 3/3
+11/6/24, 6:56 PM
+ Fantasy Football: Help Center
+ HOME MY ACCOUNT
+ SCORES
+ PLAYER RESEARCH
+ DRAFT/AUCTION
+ SOCIAL
+ HELP
+ elliotpollaro (
+ Logout)
+ HELP CENTER >
+ RESOURCES
+ ASK A QUESTION
+ Ask Question
+ SELECT A CATEGORY
+ Appearance & Customization
+ Draft & Auction
+ Feature Request
+ League Setup
+ Login & Communication
+ Mobile
+ Players & Lineups
+ Playoffs
+ Pools & Reports
+ Sales/Ordering
+ Scoring & Stats
+ Transactions
+ Tutorials
+ TUTORIALS
+ Commissioner Tutorials
+ Owner Tutorials
+ MY SUPPORT TICKETS
+ View All My Support Tickets
+ LEARN FROM OTHER CUSTOMERS
+ Go to our
+ MyFantasyLeague.com
+ Community Forums
+ - you will
+ nd site experts there who
+ have tons of experience with
+ the site, and who are eager
+ to help you with your
+ questions!
+ QUESTION
+ #
+ 1.
+ QUESTION
+ Can I write a live draft client to interface with MyFantasyLeague.com's native live draft?
+ Answer: Yes! If you're a developer who is familiar with our 
+developer's program
+ , the
+ following tips will allow you to write an application that would interface directly with th
+ MyFantasyLeague.com live draft, allowing your application to make picks to an MFL liv
+ draft, and follow along with the rest of the draft as it progresses on the MFL site. The
+ information described here also applies for the most part to slow drafts as well.
+ Your application will need to be able to read the following XML les on a regular basis
+ (preferably every 5 seconds or so to give the customer a near-real-time experience):
+ 1 )
+ http://
+ host
+ .myfantasyleague.com/ netdynamic2024/
+ league_id
+ _LEAGUE_draft_results.x- an XML le containing the current league draft order, including any picks made so far
+ as well as information as to the current round/pick, the draft status, etc.
+ 2 )
+ http://
+ host
+ .myfantasyleague.com/ netdynamic2024/
+ league_id
+ _LEAGUE_draft_status.x- an XML le containing various status messages - for example, if a draft pick did not g
+ through, why it was not allowed. This le might not exist at the beginning of a draft, so
+ your program needs to properly handle a 404 (page not found) response from our
+ server for this le.
+ 3 ) http://
+ host
+ .myfantasyleague.com/ netdynamic2024/
+ league_id
+ _chat.xml - an XML 
+containing the latest league chat messages posted to the live draft room. This le migh
+ not exist if no chat messages have been written to your league, so your program need
+ to properly handle a 404 (page not found) response from our server for this le.
+ Note that 
+host
+ needs to be the actual server where the league is located. Unlike with
+ regular API calls which redirect you to the proper server, there's no redirect here. Also
+ for Deluxe leagues, you must use the proper Unit value instead of 'LEAGUE' in the rst
+ two requests. The Unit will be something like CONFERENCE00 or DIVISION00. Request
+ these XML les do not count against our new API rate limits. If you use the draftResult
+ API request instead, those will count and your application will likely not be able keep u
+ The above les are all that is needed to write an application that o ers a real-time view
+ into an MFL draft. To allow a customer to actually make draft picks from your
+ application, you'll need the following information:
+ 1 ) Establish a session to the MyFantasyLeague.com league in question following the
+ "Login Required" instructions available on 
+this page
+ .
+ 2 ) Make a call to the URL http://www47.myfantasyleague.com/2024/live_draft?
+ L=
+ league_id
+ &CMD=DRAFT&PLAYER_PICK=player_id&ROUND=round&PICK=pick&JSON=
+ where player_id is the player id to select. You also need to specify the ROUND and PIC
+ for the current pick. This is new as of 2019 and it's required due to the client programs
+ getting out of sync.
+ 3 ) Also new for 2019, the success of the pick will be in the return from the call. This m
+ be returned in JSON or XML format depending on the value of the JSON and XML
+ https://api.myfantasyleague.com/2024/support?FAQ=935
+ 1/2
+parameters.
+ To allow the commissioner to make picks on behalf of another user, pass the
+ FRANCHISE_PICK=franchise_id parameter in the live_draft call. Note that this is only us
+ for validation and not to change the franchise that owns a pick. Similarly the ROUND a
+ PICK parameters can not be used to change a draft pick other than the current pick.
+ Additional controls over the draft are possible using the following values for the CMD
+ parameter:
+ PAUSE: pauses the draft timer. The timer must be running at the time for it to pause it
+ RESUME: resumes the draft timer. The timer must be paused at the time. The timer
+ restarts from where it left o or 15 seconds if it's under 15 seconds.
+ UNDO: undrafts the last draft pick made.
+ SKIP: skips the current draft pick.
+ These commands are only valid when coming from a user logged in as the
+ commissioner.
+ Finally, to allow customers to write chat messages to the league, you'd need to establi
+ a session to the site following the "Login Required" instructions available on 
+this page
+ ,
+ and then call a URL in this format:
+ http://www47.myfantasyleague.com/2024/chat_save?
+ L=
+ league_id
+ &MESSAGE=url+encoded+message+to+post
+ and to direct a league chat message to an individual franchise (in this example, franch
+ id 0001), call "chat_save" like this:
+ http://www47.myfantasyleague.com/2024/chat_save?
+ L=
+ league_id
+ &MESSAGE=url+encoded+message+to+post&TO_FID=0001
+ How helpful was this answer?
+ Not At All:  :Very
+ Didn't See Your Question Above? Please review the resources on the left
+hand side of this page, or,
+ Submit A Support Ticket To Us.
+ Back To Top Of Page
+ Page Generated Wed Nov 6 7:55:45 p.m. ET 2024
+ Copyright © 1995-2024 
+Sideline Software, Inc.
+ All Rights Reserved. 
+Privacy Policy
+ - 
+Terms Of Service
+ - 
+Acceptable Use Policy
+ - Powered by: 
+Sportsradar
+ . 
+Disclaimer: This site is not in any way a liated with, endorsed or licensed by the National Football League, any NFL team or NFLPA member.
+ 11/6/24, 6:56 PM Fantasy Football: Help Center
+ https://api.myfantasyleague.com/2024/support?FAQ=935 2/2
+fMyFantasyLeague.com Developers Program API Test Area
+ Before you attempt to use this API, you should first read the General Information Page. You can also view
+ the Request Reference Page or test the requests.
+ The following Perl script is a sample of how to get the league info for a league a user is in. It shows how
+ to get the cookie from a username and how to identify the host of a league. Set the $league_id,
+ $username and $password variables to appropriate values. Converting this to other languages should be
+ pretty straight-forward as long you have access to an HTTP library.
+ #!/bin/perl
+ # Set these variables somehow:
+ my $league_id = "LEAGUE_ID";
+ my $username = "USERNAME";
+ my $password = "PASSWORD";
+ my $year = "2022";
+ # Defaults
+ my $proto = "https";
+ my $api_host = "api.myfantasyleague.com";
+ my $json = 0;
+ my $req_type = 'league';
+ use HTTP::Request::Common qw(GET);
+ use LWP::UserAgent;
+ $ua = LWP::UserAgent->new();
+ my $login_url =
+ "https://$api_host/$year/login?USERNAME=$username&PASSWORD=$password&XML=1";
+ my $login_req = HTTP::Request->new("GET", $login_url);
+ print "Making request to get cookie: $login_url\n";
+ my $login_resp = $ua->request($login_req);
+ my $cookie;
+ if($login_resp->as_string() =~ /MFL_USER_ID="([^"]*)">OK/) {
+ $cookie = $1;
+ }
+ else {
+ die "Can not get login cookie. Response: " .
+ $login_resp->as_string() . "\n";
+ }
+ print "Got cookie $cookie\n";
+my $url = "${proto}://$api_host/$year/export";
+ my $headers = HTTP::Headers->new("Cookie" => "MFL_USER_ID=$cookie");
+ my $ml_args = qq(TYPE=myleagues&JSON=$json);
+ my $ml_req = HTTP::Request->new("GET", "$url?$ml_args", $headers);
+ print "Making request to get league host: $url?$ml_args\n";
+ my $ml_resp = $ua->request($ml_req);
+ # find host in the return string- note that this is for illustrating the
+ # API. A more robust solution would be to use a proper XML parser.
+ if($ml_resp->as_string() =~
+ m!url="(https?)://([a-z0-9]+.myfantasyleague.com)/$year/home/$league_id"!s) {
+ $proto = $1;
+ my $league_host = $2;
+ print "Got league host $league_host\n";
+ $url = "${proto}://${league_host}/$year/export";
+ }
+ else {
+ die "Can't find info for league id $league_id. Response: " .
+ $ml_resp->as_string() . "\n";
+ }
+ my $args = qq(TYPE=$req_type&L=$league_id&JSON=$json);
+ my $req = HTTP::Request->new("GET", "$url?$args", $headers);
+ print "Making request to get league info $url?$args\n";
+ my $resp = $ua->request($req);
+ print "\nLeague Info:\n";
+ print $resp->as_string();
+ print "\n";
+ The following Perl script is a sample of how to import data into a league. We use the auctionResults
+ request since that one requires the data to be sent in in XML. For these, it's strongly recommended that
+ you use a POST method (the ones that don't require a DATA argument can be submitted via GET fairly
+ easily). To avoid cluttering the example, this one does not show how to get the user cookie or the proper
+ league host. That process is illustrated in the export sample above.
+ #!/bin/perl
+ # Set these variables somehow:
+ my $league_id = "LEAGUE_ID";
+ my $username = "USERNAME";
+ my $password = "PASSWORD";
+ my $year = "2022";
+ # These next 3 should be set programatically, see the export sample code
+my$proto="https";
+ my$league_host="HOST.myfantasyleague.com";
+ my$cookie="USER_COOKIE";
+ #Defaults
+ my$req_type='auctionResults';
+ useHTTP::Request::Commonqw(POST);
+ useLWP::UserAgent;
+ my$ua=LWP::UserAgent->new();
+ my$url="${proto}://$league_host/$year/import";
+ my$args=qq(L=$league_id&TYPE=$req_type);
+ my$data="DATA=".qq(<auctionResults>
+ <auctionUnitunit="LEAGUE">
+ <auctionplayer="7391"franchise="0006"winningBid="3"timeStarted="1495563902"
+ lastBidTime="1495613918"/>
+ </auctionUnit>
+ </auctionResults>
+ );
+ my$headers=HTTP::Headers->new(
+ "Cookie"=>"MFL_USER_ID=".$cookie,
+ "Content-Type"=>'application/x-www-form-urlencoded',
+ "Content-Length"=>length($data),
+ );
+ my$req=HTTP::Request->new("POST","$url?$args",$headers,$data);
+ my$resp=$ua->request($req);
+ print"Response:".$resp->as_string();
+ print"\n";
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/mfl_status.xml
+ This XML file does not appear to have any style information associated with it. The document tree is shown
+ below.
+ <mfl_status year="2024">
+ <weeks CompletedWeek="9" LiveScoringWeek="9" UpcomingWeek="10" CurrentWeek="10" LineupWeek="10"/>
+ </mfl_status>
+ 1/1
+ https://api.myfantasyleague.com/fflnetdynamic2024/mfl_status.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ This XML file does not appear to have any style information associated with it. The document tree is shown
+ below.
+ <fullNflSchedule>
+ <nflSchedule week="1" lastUpdate="1730888932">
+ <matchup kickoff="1725582000" gameSecondsRemaining="0" status="FINAL">
+ <team id="BAL" isHome="0" score="20" rushDefenseRank="5" passDefenseRank="28"
+ rushOffenseRank="2" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="KCC" isHome="1" score="27" rushDefenseRank="29" passDefenseRank="26"
+ rushOffenseRank="26" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1725668100" gameSecondsRemaining="0" status="FINAL">
+ <team id="GBP" isHome="0" score="29" rushDefenseRank="23" passDefenseRank="25"
+ rushOffenseRank="6" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="PHI" isHome="1" score="34" rushDefenseRank="25" passDefenseRank="24"
+ rushOffenseRank="8" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="ARI" isHome="0" score="28" rushDefenseRank="19" passDefenseRank="22"
+ rushOffenseRank="14" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="BUF" isHome="1" score="34" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="12" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="HOU" isHome="0" score="29" rushDefenseRank="14" passDefenseRank="17"
+ rushOffenseRank="1" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="IND" isHome="1" score="27" rushDefenseRank="30" passDefenseRank="20"
+ rushOffenseRank="17" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="JAC" isHome="0" score="17" rushDefenseRank="7" passDefenseRank="30"
+ rushOffenseRank="13" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="MIA" isHome="1" score="20" rushDefenseRank="18" passDefenseRank="8"
+ rushOffenseRank="24" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="NEP" isHome="0" score="16" rushDefenseRank="3" passDefenseRank="11"
+ rushOffenseRank="5" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="9.5"/>
+ <team id="CIN" isHome="1" score="10" rushDefenseRank="26" passDefenseRank="3"
+ rushOffenseRank="28" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIN" isHome="0" score="28" rushDefenseRank="6" passDefenseRank="15"
+ rushOffenseRank="16" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="NYG" isHome="1" score="6" rushDefenseRank="15" passDefenseRank="19"
+ rushOffenseRank="25" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="TEN" isHome="0" score="17" rushDefenseRank="9" passDefenseRank="1"
+ rushOffenseRank="9" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="4.5"/>
+ <team id="CHI" isHome="1" score="24" rushDefenseRank="22" passDefenseRank="2"
+ rushOffenseRank="22" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="PIT" isHome="0" score="18" rushDefenseRank="10" passDefenseRank="7"
+ rushOffenseRank="11" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="ATL" isHome="1" score="10" rushDefenseRank="20" passDefenseRank="5"
+ rushOffenseRank="21" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="CAR" isHome="0" score="10" rushDefenseRank="28" passDefenseRank="17"
+ rushOffenseRank="30" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="4.5"/>
+ <team id="NOS" isHome="1" score="47" rushDefenseRank="1" passDefenseRank="6"
+ rushOffenseRank="3" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ 1/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ </matchup>
+ <matchup kickoff="1725825900" gameSecondsRemaining="0" status="FINAL">
+ <team id="LVR" isHome="0" score="10" rushDefenseRank="27" passDefenseRank="9"
+ rushOffenseRank="27" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="LAC" isHome="1" score="22" rushDefenseRank="4" passDefenseRank="23"
+ rushOffenseRank="4" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1725825900" gameSecondsRemaining="0" status="FINAL">
+ <team id="DEN" isHome="0" score="20" rushDefenseRank="24" passDefenseRank="12"
+ rushOffenseRank="19" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="SEA" isHome="1" score="26" rushDefenseRank="12" passDefenseRank="4"
+ rushOffenseRank="7" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1725827100" gameSecondsRemaining="0" status="FINAL">
+ <team id="DAL" isHome="0" score="33" rushDefenseRank="11" passDefenseRank="7"
+ rushOffenseRank="18" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="CLE" isHome="1" score="17" rushDefenseRank="13" passDefenseRank="14"
+ rushOffenseRank="20" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1725827100" gameSecondsRemaining="0" status="FINAL">
+ <team id="WAS" isHome="0" score="20" rushDefenseRank="16" passDefenseRank="27"
+ rushOffenseRank="10" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="TBB" isHome="1" score="37" rushDefenseRank="21" passDefenseRank="13"
+ rushOffenseRank="15" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1725841200" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAR" isHome="0" score="20" rushDefenseRank="25" passDefenseRank="18"
+ rushOffenseRank="23" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="DET" isHome="1" score="26" rushDefenseRank="8" passDefenseRank="29"
+ rushOffenseRank="6" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1725927300" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYJ" isHome="0" score="19" rushDefenseRank="28" passDefenseRank="21"
+ rushOffenseRank="29" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="SFO" isHome="1" score="32" rushDefenseRank="2" passDefenseRank="16"
+ rushOffenseRank="3" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="2" lastUpdate="1730888932">
+ <matchup kickoff="1726186500" gameSecondsRemaining="0" status="FINAL">
+ <team id="BUF" isHome="0" score="31" rushDefenseRank="17" passDefenseRank="11"
+ rushOffenseRank="17" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="2"/>
+ <team id="MIA" isHome="1" score="10" rushDefenseRank="14" passDefenseRank="4"
+ rushOffenseRank="19" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-2.0"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="SEA" isHome="0" score="23" rushDefenseRank="20" passDefenseRank="2"
+ rushOffenseRank="22" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="NEP" isHome="1" score="20" rushDefenseRank="2" passDefenseRank="25"
+ rushOffenseRank="4" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYJ" isHome="0" score="24" rushDefenseRank="22" passDefenseRank="16"
+ rushOffenseRank="25" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="TEN" isHome="1" score="17" rushDefenseRank="9" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="CLE" isHome="0" score="18" rushDefenseRank="13" passDefenseRank="12"
+ rushOffenseRank="20" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="JAC" isHome="1" score="13" rushDefenseRank="10" passDefenseRank="28"
+ rushOffenseRank="14" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ 2/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="NOS" isHome="0" score="44" rushDefenseRank="3" passDefenseRank="19"
+ rushOffenseRank="3" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="DAL" isHome="1" score="19" rushDefenseRank="19" passDefenseRank="15"
+ rushOffenseRank="24" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYG" isHome="0" score="18" rushDefenseRank="26" passDefenseRank="17"
+ rushOffenseRank="21" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="WAS" isHome="1" score="21" rushDefenseRank="15" passDefenseRank="21"
+ rushOffenseRank="5" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="TBB" isHome="0" score="20" rushDefenseRank="18" passDefenseRank="27"
+ rushOffenseRank="23" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="7"/>
+ <team id="DET" isHome="1" score="16" rushDefenseRank="4" passDefenseRank="20"
+ rushOffenseRank="8" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-7.0"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="IND" isHome="0" score="10" rushDefenseRank="30" passDefenseRank="7"
+ rushOffenseRank="15" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="GBP" isHome="1" score="16" rushDefenseRank="20" passDefenseRank="24"
+ rushOffenseRank="1" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="SFO" isHome="0" score="17" rushDefenseRank="11" passDefenseRank="21"
+ rushOffenseRank="10" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-6"/>
+ <team id="MIN" isHome="1" score="23" rushDefenseRank="7" passDefenseRank="23"
+ rushOffenseRank="13" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="6.0"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAC" isHome="0" score="26" rushDefenseRank="5" passDefenseRank="5"
+ rushOffenseRank="2" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ <team id="CAR" isHome="1" score="3" rushDefenseRank="29" passDefenseRank="8"
+ rushOffenseRank="28" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="6.5"/>
+ </matchup>
+ <matchup kickoff="1726419600" gameSecondsRemaining="0" status="FINAL">
+ <team id="LVR" isHome="0" score="26" rushDefenseRank="27" passDefenseRank="14"
+ rushOffenseRank="31" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="9.5"/>
+ <team id="BAL" isHome="1" score="23" rushDefenseRank="1" passDefenseRank="30"
+ rushOffenseRank="6" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ </matchup>
+ <matchup kickoff="1726430700" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAR" isHome="0" score="10" rushDefenseRank="28" passDefenseRank="22"
+ rushOffenseRank="30" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="ARI" isHome="1" score="41" rushDefenseRank="8" passDefenseRank="18"
+ rushOffenseRank="4" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ </matchup>
+ <matchup kickoff="1726431900" gameSecondsRemaining="0" status="FINAL">
+ <team id="PIT" isHome="0" score="13" rushDefenseRank="4" passDefenseRank="13"
+ rushOffenseRank="11" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="DEN" isHome="1" score="6" rushDefenseRank="21" passDefenseRank="3"
+ rushOffenseRank="26" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1726431900" gameSecondsRemaining="0" status="FINAL">
+ <team id="CIN" isHome="0" score="25" rushDefenseRank="24" passDefenseRank="2"
+ rushOffenseRank="29" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="KCC" isHome="1" score="26" rushDefenseRank="16" passDefenseRank="29"
+ rushOffenseRank="18" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1726446000" gameSecondsRemaining="0" status="FINAL">
+ <team id="CHI" isHome="0" score="13" rushDefenseRank="12" passDefenseRank="10"
+ rushOffenseRank="27" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="HOU" isHome="1" score="19" rushDefenseRank="6" passDefenseRank="9"
+ rushOffenseRank="9" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ 3/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <matchup kickoff="1726532100" gameSecondsRemaining="0" status="FINAL">
+ <team id="ATL" isHome="0" score="22" rushDefenseRank="25" passDefenseRank="6"
+ rushOffenseRank="16" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="PHI" isHome="1" score="21" rushDefenseRank="23" passDefenseRank="26"
+ rushOffenseRank="7" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="3" lastUpdate="1730888932">
+ <matchup kickoff="1726791300" gameSecondsRemaining="0" status="FINAL">
+ <team id="NEP" isHome="0" score="3" rushDefenseRank="4" passDefenseRank="26"
+ rushOffenseRank="8" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="NYJ" isHome="1" score="24" rushDefenseRank="19" passDefenseRank="4"
+ rushOffenseRank="21" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ <matchup kickoff="1727024400" gameSecondsRemaining="0" status="FINAL">
+ <team id="CHI" isHome="0" score="16" rushDefenseRank="15" passDefenseRank="7"
+ rushOffenseRank="31" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="1"/>
+ <team id="IND" isHome="1" score="21" rushDefenseRank="28" passDefenseRank="20"
+ rushOffenseRank="11" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-1.0"/>
+ </matchup>
+ <matchup kickoff="1727024400" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYG" isHome="0" score="21" rushDefenseRank="20" passDefenseRank="12"
+ rushOffenseRank="19" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="CLE" isHome="1" score="15" rushDefenseRank="12" passDefenseRank="14"
+ rushOffenseRank="24" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1727024400" gameSecondsRemaining="0" status="FINAL">
+ <team id="GBP" isHome="0" score="30" rushDefenseRank="9" passDefenseRank="21"
+ rushOffenseRank="1" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="TEN" isHome="1" score="14" rushDefenseRank="17" passDefenseRank="3"
+ rushOffenseRank="20" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1727024400" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAC" isHome="0" score="10" rushDefenseRank="5" passDefenseRank="9"
+ rushOffenseRank="7" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="2"/>
+ <team id="PIT" isHome="1" score="20" rushDefenseRank="2" passDefenseRank="5"
+ rushOffenseRank="12" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-2.0"/>
+ </matchup>
+ <matchup kickoff="1727024400" gameSecondsRemaining="0" status="FINAL">
+ <team id="HOU" isHome="0" score="7" rushDefenseRank="6" passDefenseRank="6"
+ rushOffenseRank="17" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="MIN" isHome="1" score="34" rushDefenseRank="2" passDefenseRank="25"
+ rushOffenseRank="13" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1727024400" gameSecondsRemaining="0" status="FINAL">
+ <team id="DEN" isHome="0" score="26" rushDefenseRank="18" passDefenseRank="2"
+ rushOffenseRank="22" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="7"/>
+ <team id="TBB" isHome="1" score="7" rushDefenseRank="22" passDefenseRank="23"
+ rushOffenseRank="27" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="-7.0"/>
+ </matchup>
+ <matchup kickoff="1727024400" gameSecondsRemaining="0" status="FINAL">
+ <team id="PHI" isHome="0" score="15" rushDefenseRank="21" passDefenseRank="17"
+ rushOffenseRank="3" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="NOS" isHome="1" score="12" rushDefenseRank="7" passDefenseRank="24"
+ rushOffenseRank="6" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1727035500" gameSecondsRemaining="0" status="FINAL">
+ <team id="CAR" isHome="0" score="36" rushDefenseRank="25" passDefenseRank="16"
+ rushOffenseRank="26" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="7"/>
+ <team id="LVR" isHome="1" score="22" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="32" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-7.0"/>
+ </matchup>
+ <matchup kickoff="1727035500" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIA" isHome="0" score="3" rushDefenseRank="11" passDefenseRank="11"
+ rushOffenseRank="25" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="5"/>
+ 4/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="SEA" isHome="1" score="24" rushDefenseRank="13" passDefenseRank="1"
+ rushOffenseRank="23" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-5.0"/>
+ </matchup>
+ <matchup kickoff="1727036700" gameSecondsRemaining="0" status="FINAL">
+ <team id="BAL" isHome="0" score="28" rushDefenseRank="1" passDefenseRank="31"
+ rushOffenseRank="2" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-1"/>
+ <team id="DAL" isHome="1" score="25" rushDefenseRank="29" passDefenseRank="13"
+ rushOffenseRank="30" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="1.0"/>
+ </matchup>
+ <matchup kickoff="1727036700" gameSecondsRemaining="0" status="FINAL">
+ <team id="DET" isHome="0" score="20" rushDefenseRank="3" passDefenseRank="18"
+ rushOffenseRank="4" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="ARI" isHome="1" score="13" rushDefenseRank="16" passDefenseRank="15"
+ rushOffenseRank="9" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1727036700" gameSecondsRemaining="0" status="FINAL">
+ <team id="SFO" isHome="0" score="24" rushDefenseRank="8" passDefenseRank="19"
+ rushOffenseRank="10" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ <team id="LAR" isHome="1" score="27" rushDefenseRank="27" passDefenseRank="28"
+ rushOffenseRank="29" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="7.5"/>
+ </matchup>
+ <matchup kickoff="1727050800" gameSecondsRemaining="0" status="FINAL">
+ <team id="KCC" isHome="0" score="22" rushDefenseRank="12" passDefenseRank="27"
+ rushOffenseRank="15" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="ATL" isHome="1" score="17" rushDefenseRank="24" passDefenseRank="10"
+ rushOffenseRank="18" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1727134200" gameSecondsRemaining="0" status="FINAL">
+ <team id="JAC" isHome="0" score="10" rushDefenseRank="10" passDefenseRank="29"
+ rushOffenseRank="16" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="BUF" isHome="1" score="47" rushDefenseRank="14" passDefenseRank="8"
+ rushOffenseRank="14" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1727136900" gameSecondsRemaining="0" status="FINAL">
+ <team id="WAS" isHome="0" score="38" rushDefenseRank="15" passDefenseRank="30"
+ rushOffenseRank="5" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="8"/>
+ <team id="CIN" isHome="1" score="33" rushDefenseRank="23" passDefenseRank="8"
+ rushOffenseRank="28" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-8.0"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="4" lastUpdate="1730888932">
+ <matchup kickoff="1727396100" gameSecondsRemaining="0" status="FINAL">
+ <team id="DAL" isHome="0" score="20" rushDefenseRank="26" passDefenseRank="19"
+ rushOffenseRank="31" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ <team id="NYG" isHome="1" score="15" rushDefenseRank="15" passDefenseRank="13"
+ rushOffenseRank="29" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="4.5"/>
+ </matchup>
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="PIT" isHome="0" score="24" rushDefenseRank="3" passDefenseRank="8"
+ rushOffenseRank="10" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="IND" isHome="1" score="27" rushDefenseRank="30" passDefenseRank="25"
+ rushOffenseRank="9" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="DEN" isHome="0" score="10" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="20" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="7"/>
+ <team id="NYJ" isHome="1" score="9" rushDefenseRank="20" passDefenseRank="2"
+ rushOffenseRank="26" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="-7.0"/>
+ </matchup>
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAR" isHome="0" score="18" rushDefenseRank="31" passDefenseRank="20"
+ rushOffenseRank="27" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="CHI" isHome="1" score="24" rushDefenseRank="18" passDefenseRank="8"
+ rushOffenseRank="28" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ 5/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIN" isHome="0" score="31" rushDefenseRank="2" passDefenseRank="31"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="GBP" isHome="1" score="29" rushDefenseRank="11" passDefenseRank="23"
+ rushOffenseRank="2" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="PHI" isHome="0" score="16" rushDefenseRank="21" passDefenseRank="26"
+ rushOffenseRank="4" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="TBB" isHome="1" score="33" rushDefenseRank="22" passDefenseRank="15"
+ rushOffenseRank="24" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="NOS" isHome="0" score="24" rushDefenseRank="7" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="2"/>
+ <team id="ATL" isHome="1" score="26" rushDefenseRank="25" passDefenseRank="12"
+ rushOffenseRank="21" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="-2.0"/>
+ </matchup>
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="CIN" isHome="0" score="34" rushDefenseRank="25" passDefenseRank="10"
+ rushOffenseRank="22" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ <team id="CAR" isHome="1" score="24" rushDefenseRank="28" passDefenseRank="18"
+ rushOffenseRank="18" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="4.5"/>
+ </matchup>
+ <matchup kickoff="1727629200" gameSecondsRemaining="0" status="FINAL">
+ <team id="JAC" isHome="0" score="20" rushDefenseRank="10" passDefenseRank="30"
+ rushOffenseRank="13" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="HOU" isHome="1" score="24" rushDefenseRank="13" passDefenseRank="4"
+ rushOffenseRank="19" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1727640300" gameSecondsRemaining="0" status="FINAL">
+ <team id="WAS" isHome="0" score="42" rushDefenseRank="23" passDefenseRank="21"
+ rushOffenseRank="3" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="ARI" isHome="1" score="14" rushDefenseRank="27" passDefenseRank="17"
+ rushOffenseRank="5" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1727640300" gameSecondsRemaining="0" status="FINAL">
+ <team id="NEP" isHome="0" score="13" rushDefenseRank="9" passDefenseRank="27"
+ rushOffenseRank="12" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="10"/>
+ <team id="SFO" isHome="1" score="30" rushDefenseRank="6" passDefenseRank="14"
+ rushOffenseRank="8" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-10.0"/>
+ </matchup>
+ <matchup kickoff="1727641500" gameSecondsRemaining="0" status="FINAL">
+ <team id="CLE" isHome="0" score="16" rushDefenseRank="19" passDefenseRank="9"
+ rushOffenseRank="25" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="1"/>
+ <team id="LVR" isHome="1" score="20" rushDefenseRank="24" passDefenseRank="16"
+ rushOffenseRank="30" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-1.0"/>
+ </matchup>
+ <matchup kickoff="1727641500" gameSecondsRemaining="0" status="FINAL">
+ <team id="KCC" isHome="0" score="17" rushDefenseRank="8" passDefenseRank="22"
+ rushOffenseRank="15" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-8"/>
+ <team id="LAC" isHome="1" score="10" rushDefenseRank="5" passDefenseRank="11"
+ rushOffenseRank="11" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="8.0"/>
+ </matchup>
+ <matchup kickoff="1727655600" gameSecondsRemaining="0" status="FINAL">
+ <team id="BUF" isHome="0" score="10" rushDefenseRank="29" passDefenseRank="6"
+ rushOffenseRank="17" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="BAL" isHome="1" score="35" rushDefenseRank="1" passDefenseRank="28"
+ rushOffenseRank="1" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1727739000" gameSecondsRemaining="0" status="FINAL">
+ <team id="TEN" isHome="0" score="31" rushDefenseRank="17" passDefenseRank="1"
+ rushOffenseRank="16" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="1"/>
+ <team id="MIA" isHome="1" score="12" rushDefenseRank="16" passDefenseRank="5"
+ rushOffenseRank="23" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="-1.0"/>
+ 6/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ </matchup>
+ <matchup kickoff="1727741700" gameSecondsRemaining="0" status="FINAL">
+ <team id="SEA" isHome="0" score="29" rushDefenseRank="14" passDefenseRank="7"
+ rushOffenseRank="20" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="4"/>
+ <team id="DET" isHome="1" score="42" rushDefenseRank="4" passDefenseRank="29"
+ rushOffenseRank="6" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-4.0"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="5" lastUpdate="1730888932">
+ <matchup kickoff="1728000900" gameSecondsRemaining="0" status="FINAL">
+ <team id="TBB" isHome="0" score="30" rushDefenseRank="16" passDefenseRank="28"
+ rushOffenseRank="20" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="ATL" isHome="1" score="36" rushDefenseRank="29" passDefenseRank="9"
+ rushOffenseRank="26" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ </matchup>
+ <matchup kickoff="1728221400" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYJ" isHome="0" score="17" rushDefenseRank="14" passDefenseRank="2"
+ rushOffenseRank="32" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="MIN" isHome="1" score="23" rushDefenseRank="2" passDefenseRank="30"
+ rushOffenseRank="17" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1728234000" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIA" isHome="0" score="15" rushDefenseRank="19" passDefenseRank="4"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="1"/>
+ <team id="NEP" isHome="1" score="10" rushDefenseRank="13" passDefenseRank="25"
+ rushOffenseRank="8" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="-1.0"/>
+ </matchup>
+ <matchup kickoff="1728234000" gameSecondsRemaining="0" status="FINAL">
+ <team id="BAL" isHome="0" score="41" rushDefenseRank="1" passDefenseRank="31"
+ rushOffenseRank="1" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="CIN" isHome="1" score="38" rushDefenseRank="30" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1728234000" gameSecondsRemaining="0" status="FINAL">
+ <team id="IND" isHome="0" score="34" rushDefenseRank="31" passDefenseRank="29"
+ rushOffenseRank="12" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="JAC" isHome="1" score="37" rushDefenseRank="8" passDefenseRank="32"
+ rushOffenseRank="11" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1728234000" gameSecondsRemaining="0" status="FINAL">
+ <team id="CLE" isHome="0" score="13" rushDefenseRank="25" passDefenseRank="8"
+ rushOffenseRank="27" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="WAS" isHome="1" score="34" rushDefenseRank="22" passDefenseRank="13"
+ rushOffenseRank="2" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1728234000" gameSecondsRemaining="0" status="FINAL">
+ <team id="CAR" isHome="0" score="10" rushDefenseRank="27" passDefenseRank="22"
+ rushOffenseRank="19" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="CHI" isHome="1" score="36" rushDefenseRank="18" passDefenseRank="6"
+ rushOffenseRank="29" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1728234000" gameSecondsRemaining="0" status="FINAL">
+ <team id="BUF" isHome="0" score="20" rushDefenseRank="26" passDefenseRank="14"
+ rushOffenseRank="14" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="1"/>
+ <team id="HOU" isHome="1" score="23" rushDefenseRank="17" passDefenseRank="3"
+ rushOffenseRank="23" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-1.0"/>
+ </matchup>
+ <matchup kickoff="1728245100" gameSecondsRemaining="0" status="FINAL">
+ <team id="LVR" isHome="0" score="18" rushDefenseRank="23" passDefenseRank="16"
+ rushOffenseRank="30" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="DEN" isHome="1" score="34" rushDefenseRank="10" passDefenseRank="5"
+ rushOffenseRank="21" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1728245100" gameSecondsRemaining="0" status="FINAL">
+ 7/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="ARI" isHome="0" score="24" rushDefenseRank="28" passDefenseRank="18"
+ rushOffenseRank="4" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="7.5"/>
+ <team id="SFO" isHome="1" score="23" rushDefenseRank="9" passDefenseRank="12"
+ rushOffenseRank="7" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ </matchup>
+ <matchup kickoff="1728246300" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYG" isHome="0" score="29" rushDefenseRank="12" passDefenseRank="15"
+ rushOffenseRank="24" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="SEA" isHome="1" score="20" rushDefenseRank="20" passDefenseRank="7"
+ rushOffenseRank="22" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ <matchup kickoff="1728246300" gameSecondsRemaining="0" status="FINAL">
+ <team id="GBP" isHome="0" score="24" rushDefenseRank="11" passDefenseRank="23"
+ rushOffenseRank="3" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="LAR" isHome="1" score="19" rushDefenseRank="32" passDefenseRank="20"
+ rushOffenseRank="25" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1728260400" gameSecondsRemaining="0" status="FINAL">
+ <team id="DAL" isHome="0" score="20" rushDefenseRank="24" passDefenseRank="11"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="PIT" isHome="1" score="17" rushDefenseRank="5" passDefenseRank="17"
+ rushOffenseRank="13" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1728346500" gameSecondsRemaining="0" status="FINAL">
+ <team id="NOS" isHome="0" score="13" rushDefenseRank="7" passDefenseRank="26"
+ rushOffenseRank="10" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="5"/>
+ <team id="KCC" isHome="1" score="26" rushDefenseRank="3" passDefenseRank="21"
+ rushOffenseRank="15" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-5.0"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="6" lastUpdate="1730888932">
+ <matchup kickoff="1728605700" gameSecondsRemaining="0" status="FINAL">
+ <team id="SFO" isHome="0" score="36" rushDefenseRank="7" passDefenseRank="17"
+ rushOffenseRank="3" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="SEA" isHome="1" score="24" rushDefenseRank="26" passDefenseRank="10"
+ rushOffenseRank="29" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1728826200" gameSecondsRemaining="0" status="FINAL">
+ <team id="JAC" isHome="0" score="16" rushDefenseRank="11" passDefenseRank="32"
+ rushOffenseRank="19" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="CHI" isHome="1" score="35" rushDefenseRank="10" passDefenseRank="6"
+ rushOffenseRank="25" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1728838800" gameSecondsRemaining="0" status="FINAL">
+ <team id="HOU" isHome="0" score="41" rushDefenseRank="12" passDefenseRank="4"
+ rushOffenseRank="14" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-7"/>
+ <team id="NEP" isHome="1" score="21" rushDefenseRank="18" passDefenseRank="24"
+ rushOffenseRank="12" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="7.0"/>
+ </matchup>
+ <matchup kickoff="1728838800" gameSecondsRemaining="0" status="FINAL">
+ <team id="IND" isHome="0" score="20" rushDefenseRank="30" passDefenseRank="26"
+ rushOffenseRank="17" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-1"/>
+ <team id="TEN" isHome="1" score="17" rushDefenseRank="9" passDefenseRank="1"
+ rushOffenseRank="15" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="1.0"/>
+ </matchup>
+ <matchup kickoff="1728838800" gameSecondsRemaining="0" status="FINAL">
+ <team id="CLE" isHome="0" score="16" rushDefenseRank="20" passDefenseRank="11"
+ rushOffenseRank="28" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="8.5"/>
+ <team id="PHI" isHome="1" score="20" rushDefenseRank="15" passDefenseRank="21"
+ rushOffenseRank="6" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-8.5"/>
+ </matchup>
+ <matchup kickoff="1728838800" gameSecondsRemaining="0" status="FINAL">
+ <team id="ARI" isHome="0" score="13" rushDefenseRank="28" passDefenseRank="22"
+ rushOffenseRank="7" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="5"/>
+ 8/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="GBP" isHome="1" score="34" rushDefenseRank="8" passDefenseRank="25"
+ rushOffenseRank="2" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-5.0"/>
+ </matchup>
+ <matchup kickoff="1728838800" gameSecondsRemaining="0" status="FINAL">
+ <team id="TBB" isHome="0" score="51" rushDefenseRank="11" passDefenseRank="28"
+ rushOffenseRank="8" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="NOS" isHome="1" score="27" rushDefenseRank="19" passDefenseRank="29"
+ rushOffenseRank="13" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1728838800" gameSecondsRemaining="0" status="FINAL">
+ <team id="WAS" isHome="0" score="23" rushDefenseRank="21" passDefenseRank="19"
+ rushOffenseRank="5" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="BAL" isHome="1" score="30" rushDefenseRank="1" passDefenseRank="31"
+ rushOffenseRank="1" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ <matchup kickoff="1728849900" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAC" isHome="0" score="23" rushDefenseRank="6" passDefenseRank="8"
+ rushOffenseRank="10" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="DEN" isHome="1" score="16" rushDefenseRank="13" passDefenseRank="5"
+ rushOffenseRank="23" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1728849900" gameSecondsRemaining="0" status="FINAL">
+ <team id="PIT" isHome="0" score="32" rushDefenseRank="4" passDefenseRank="13"
+ rushOffenseRank="9" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="LVR" isHome="1" score="13" rushDefenseRank="23" passDefenseRank="7"
+ rushOffenseRank="31" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1728851100" gameSecondsRemaining="0" status="FINAL">
+ <team id="DET" isHome="0" score="47" rushDefenseRank="3" passDefenseRank="27"
+ rushOffenseRank="4" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="DAL" isHome="1" score="9" rushDefenseRank="25" passDefenseRank="16"
+ rushOffenseRank="32" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1728851100" gameSecondsRemaining="0" status="FINAL">
+ <team id="ATL" isHome="0" score="38" rushDefenseRank="24" passDefenseRank="9"
+ rushOffenseRank="21" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-6"/>
+ <team id="CAR" isHome="1" score="20" rushDefenseRank="29" passDefenseRank="23"
+ rushOffenseRank="22" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="6.0"/>
+ </matchup>
+ <matchup kickoff="1728865200" gameSecondsRemaining="0" status="FINAL">
+ <team id="CIN" isHome="0" score="17" rushDefenseRank="27" passDefenseRank="14"
+ rushOffenseRank="26" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="NYG" isHome="1" score="7" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="24" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1728951300" gameSecondsRemaining="0" status="FINAL">
+ <team id="BUF" isHome="0" score="23" rushDefenseRank="22" passDefenseRank="15"
+ rushOffenseRank="11" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="NYJ" isHome="1" score="20" rushDefenseRank="16" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="7" lastUpdate="1730888932">
+ <matchup kickoff="1729210500" gameSecondsRemaining="0" status="FINAL">
+ <team id="DEN" isHome="0" score="33" rushDefenseRank="10" passDefenseRank="5"
+ rushOffenseRank="13" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-2"/>
+ <team id="NOS" isHome="1" score="10" rushDefenseRank="28" passDefenseRank="28"
+ rushOffenseRank="19" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="2.0"/>
+ </matchup>
+ <matchup kickoff="1729431000" gameSecondsRemaining="0" status="FINAL">
+ <team id="NEP" isHome="0" score="16" rushDefenseRank="21" passDefenseRank="24"
+ rushOffenseRank="21" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="JAC" isHome="1" score="32" rushDefenseRank="6" passDefenseRank="31"
+ rushOffenseRank="12" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ 9/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <matchup kickoff="1729443600" gameSecondsRemaining="0" status="FINAL">
+ <team id="TEN" isHome="0" score="10" rushDefenseRank="7" passDefenseRank="3"
+ rushOffenseRank="20" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="8.5"/>
+ <team id="BUF" isHome="1" score="34" rushDefenseRank="20" passDefenseRank="17"
+ rushOffenseRank="19" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="-8.5"/>
+ </matchup>
+ <matchup kickoff="1729443600" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIA" isHome="0" score="10" rushDefenseRank="17" passDefenseRank="1"
+ rushOffenseRank="11" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="IND" isHome="1" score="16" rushDefenseRank="30" passDefenseRank="23"
+ rushOffenseRank="14" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1729443600" gameSecondsRemaining="0" status="FINAL">
+ <team id="CIN" isHome="0" score="21" rushDefenseRank="21" passDefenseRank="21"
+ rushOffenseRank="27" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ <team id="CLE" isHome="1" score="14" rushDefenseRank="15" passDefenseRank="11"
+ rushOffenseRank="27" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="4.5"/>
+ </matchup>
+ <matchup kickoff="1729443600" gameSecondsRemaining="0" status="FINAL">
+ <team id="PHI" isHome="0" score="28" rushDefenseRank="14" passDefenseRank="10"
+ rushOffenseRank="2" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="NYG" isHome="1" score="3" rushDefenseRank="24" passDefenseRank="6"
+ rushOffenseRank="24" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1729443600" gameSecondsRemaining="0" status="FINAL">
+ <team id="HOU" isHome="0" score="22" rushDefenseRank="8" passDefenseRank="4"
+ rushOffenseRank="15" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="GBP" isHome="1" score="24" rushDefenseRank="13" passDefenseRank="15"
+ rushOffenseRank="5" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1729443600" gameSecondsRemaining="0" status="FINAL">
+ <team id="DET" isHome="0" score="31" rushDefenseRank="5" passDefenseRank="27"
+ rushOffenseRank="4" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="MIN" isHome="1" score="29" rushDefenseRank="2" passDefenseRank="30"
+ rushOffenseRank="17" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1729443600" gameSecondsRemaining="0" status="FINAL">
+ <team id="SEA" isHome="0" score="34" rushDefenseRank="27" passDefenseRank="13"
+ rushOffenseRank="26" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="ATL" isHome="1" score="14" rushDefenseRank="23" passDefenseRank="14"
+ rushOffenseRank="16" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1729454700" gameSecondsRemaining="0" status="FINAL">
+ <team id="CAR" isHome="0" score="7" rushDefenseRank="31" passDefenseRank="25"
+ rushOffenseRank="22" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="7.5"/>
+ <team id="WAS" isHome="1" score="40" rushDefenseRank="18" passDefenseRank="12"
+ rushOffenseRank="3" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ </matchup>
+ <matchup kickoff="1729454700" gameSecondsRemaining="0" status="FINAL">
+ <team id="LVR" isHome="0" score="15" rushDefenseRank="22" passDefenseRank="8"
+ rushOffenseRank="28" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="LAR" isHome="1" score="20" rushDefenseRank="29" passDefenseRank="18"
+ rushOffenseRank="25" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1729455900" gameSecondsRemaining="0" status="FINAL">
+ <team id="KCC" isHome="0" score="28" rushDefenseRank="4" passDefenseRank="20"
+ rushOffenseRank="10" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="1"/>
+ <team id="SFO" isHome="1" score="18" rushDefenseRank="12" passDefenseRank="16"
+ rushOffenseRank="7" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-1.0"/>
+ </matchup>
+ <matchup kickoff="1729470000" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYJ" isHome="0" score="15" rushDefenseRank="16" passDefenseRank="2"
+ rushOffenseRank="29" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="PIT" isHome="1" score="37" rushDefenseRank="3" passDefenseRank="22"
+ rushOffenseRank="9" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="1.5"/>
+ 10/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ </matchup>
+ <matchup kickoff="1729556100" gameSecondsRemaining="0" status="FINAL">
+ <team id="BAL" isHome="0" score="41" rushDefenseRank="1" passDefenseRank="32"
+ rushOffenseRank="1" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="TBB" isHome="1" score="31" rushDefenseRank="19" passDefenseRank="29"
+ rushOffenseRank="8" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1729558800" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAC" isHome="0" score="15" rushDefenseRank="9" passDefenseRank="9"
+ rushOffenseRank="18" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="ARI" isHome="1" score="17" rushDefenseRank="25" passDefenseRank="26"
+ rushOffenseRank="6" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="8" lastUpdate="1730888932">
+ <matchup kickoff="1729815300" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIN" isHome="0" score="20" rushDefenseRank="3" passDefenseRank="29"
+ rushOffenseRank="22" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="LAR" isHome="1" score="30" rushDefenseRank="23" passDefenseRank="15"
+ rushOffenseRank="26" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ <team id="ARI" isHome="0" score="28" rushDefenseRank="26" passDefenseRank="25"
+ rushOffenseRank="7" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="MIA" isHome="1" score="27" rushDefenseRank="16" passDefenseRank="5"
+ rushOffenseRank="9" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYJ" isHome="0" score="22" rushDefenseRank="17" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-7"/>
+ <team id="NEP" isHome="1" score="25" rushDefenseRank="22" passDefenseRank="22"
+ rushOffenseRank="23" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="7.0"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ <team id="PHI" isHome="0" score="37" rushDefenseRank="8" passDefenseRank="10"
+ rushOffenseRank="2" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="CIN" isHome="1" score="17" rushDefenseRank="24" passDefenseRank="20"
+ rushOffenseRank="28" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ <team id="BAL" isHome="0" score="24" rushDefenseRank="1" passDefenseRank="31"
+ rushOffenseRank="1" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-11.5"/>
+ <team id="CLE" isHome="1" score="29" rushDefenseRank="18" passDefenseRank="12"
+ rushOffenseRank="27" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="11.5"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ <team id="GBP" isHome="0" score="30" rushDefenseRank="10" passDefenseRank="18"
+ rushOffenseRank="5" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ <team id="JAC" isHome="1" score="27" rushDefenseRank="9" passDefenseRank="30"
+ rushOffenseRank="16" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="4.5"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ <team id="TEN" isHome="0" score="14" rushDefenseRank="12" passDefenseRank="1"
+ rushOffenseRank="17" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="11"/>
+ <team id="DET" isHome="1" score="52" rushDefenseRank="5" passDefenseRank="26"
+ rushOffenseRank="6" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-11.0"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ <team id="ATL" isHome="0" score="31" rushDefenseRank="21" passDefenseRank="17"
+ rushOffenseRank="15" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="TBB" isHome="1" score="26" rushDefenseRank="20" passDefenseRank="28"
+ rushOffenseRank="10" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1730048400" gameSecondsRemaining="0" status="FINAL">
+ 11/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="IND" isHome="0" score="20" rushDefenseRank="30" passDefenseRank="23"
+ rushOffenseRank="11" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="HOU" isHome="1" score="23" rushDefenseRank="13" passDefenseRank="3"
+ rushOffenseRank="18" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1730059500" gameSecondsRemaining="0" status="FINAL">
+ <team id="NOS" isHome="0" score="8" rushDefenseRank="28" passDefenseRank="27"
+ rushOffenseRank="21" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="7"/>
+ <team id="LAC" isHome="1" score="26" rushDefenseRank="11" passDefenseRank="9"
+ rushOffenseRank="20" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="-7.0"/>
+ </matchup>
+ <matchup kickoff="1730059500" gameSecondsRemaining="0" status="FINAL">
+ <team id="BUF" isHome="0" score="31" rushDefenseRank="15" passDefenseRank="13"
+ rushOffenseRank="12" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="SEA" isHome="1" score="10" rushDefenseRank="29" passDefenseRank="13"
+ rushOffenseRank="29" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1730060700" gameSecondsRemaining="0" status="FINAL">
+ <team id="CAR" isHome="0" score="14" rushDefenseRank="32" passDefenseRank="24"
+ rushOffenseRank="25" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="8"/>
+ <team id="DEN" isHome="1" score="28" rushDefenseRank="7" passDefenseRank="4"
+ rushOffenseRank="14" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="-8.0"/>
+ </matchup>
+ <matchup kickoff="1730060700" gameSecondsRemaining="0" status="FINAL">
+ <team id="KCC" isHome="0" score="27" rushDefenseRank="2" passDefenseRank="16"
+ rushOffenseRank="13" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ <team id="LVR" isHome="1" score="20" rushDefenseRank="19" passDefenseRank="7"
+ rushOffenseRank="31" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="9.5"/>
+ </matchup>
+ <matchup kickoff="1730060700" gameSecondsRemaining="0" status="FINAL">
+ <team id="CHI" isHome="0" score="15" rushDefenseRank="14" passDefenseRank="11"
+ rushOffenseRank="19" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="WAS" isHome="1" score="18" rushDefenseRank="25" passDefenseRank="6"
+ rushOffenseRank="3" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1730074800" gameSecondsRemaining="0" status="FINAL">
+ <team id="DAL" isHome="0" score="24" rushDefenseRank="31" passDefenseRank="19"
+ rushOffenseRank="32" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="4.5"/>
+ <team id="SFO" isHome="1" score="30" rushDefenseRank="6" passDefenseRank="14"
+ rushOffenseRank="4" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ <matchup kickoff="1730160900" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYG" isHome="0" score="18" rushDefenseRank="27" passDefenseRank="8"
+ rushOffenseRank="24" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="PIT" isHome="1" score="26" rushDefenseRank="4" passDefenseRank="21"
+ rushOffenseRank="8" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="9" lastUpdate="1730888932">
+ <matchup kickoff="1730420100" gameSecondsRemaining="0" status="FINAL">
+ <team id="HOU" isHome="0" score="13" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="2"/>
+ <team id="NYJ" isHome="1" score="21" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-2.0"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIA" isHome="0" score="27" rushDefenseRank="13" passDefenseRank="4"
+ rushOffenseRank="9" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="BUF" isHome="1" score="30" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="LVR" isHome="0" score="24" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="7.5"/>
+ 12/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="CIN" isHome="1" score="41" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAC" isHome="0" score="27" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-2"/>
+ <team id="CLE" isHome="1" score="10" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="2.0"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="NEP" isHome="0" score="17" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="TEN" isHome="1" score="20" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="WAS" isHome="0" score="27" rushDefenseRank="29" passDefenseRank="5"
+ rushOffenseRank="3" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="NYG" isHome="1" score="22" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="DAL" isHome="0" score="21" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="ATL" isHome="1" score="27" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="NOS" isHome="0" score="22" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="-7"/>
+ <team id="CAR" isHome="1" score="23" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="7.0"/>
+ </matchup>
+ <matchup kickoff="1730656800" gameSecondsRemaining="0" status="FINAL">
+ <team id="DEN" isHome="0" score="10" rushDefenseRank="9" passDefenseRank="6"
+ rushOffenseRank="15" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="9"/>
+ <team id="BAL" isHome="1" score="41" rushDefenseRank="1" passDefenseRank="32"
+ rushOffenseRank="1" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-9.0"/>
+ </matchup>
+ <matchup kickoff="1730667900" gameSecondsRemaining="0" status="FINAL">
+ <team id="JAC" isHome="0" score="23" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="7.5"/>
+ <team id="PHI" isHome="1" score="28" rushDefenseRank="5" passDefenseRank="7"
+ rushOffenseRank="2" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ </matchup>
+ <matchup kickoff="1730667900" gameSecondsRemaining="0" status="FINAL">
+ <team id="CHI" isHome="0" score="9" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-1"/>
+ <team id="ARI" isHome="1" score="29" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="1.0"/>
+ </matchup>
+ <matchup kickoff="1730669100" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAR" isHome="0" score="26" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="SEA" isHome="1" score="20" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1730669100" gameSecondsRemaining="0" status="FINAL">
+ <team id="DET" isHome="0" score="24" rushDefenseRank="7" passDefenseRank="29"
+ rushOffenseRank="6" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="GBP" isHome="1" score="14" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1730683200" gameSecondsRemaining="0" status="FINAL">
+ 13/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="IND" isHome="0" score="13" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="MIN" isHome="1" score="21" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1730769300" gameSecondsRemaining="0" status="FINAL">
+ <team id="TBB" isHome="0" score="24" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="8.5"/>
+ <team id="KCC" isHome="1" score="30" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-8.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="10" lastUpdate="1730888932">
+ <matchup kickoff="1731028500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CIN" isHome="0" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="BAL" isHome="1" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ <matchup kickoff="1731249000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYG" isHome="0" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="-5"/>
+ <team id="CAR" isHome="1" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="5.0"/>
+ </matchup>
+ <matchup kickoff="1731261600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="BUF" isHome="0" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-4"/>
+ <team id="IND" isHome="1" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="4.0"/>
+ </matchup>
+ <matchup kickoff="1731261600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIN" isHome="0" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-4"/>
+ <team id="JAC" isHome="1" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="4.0"/>
+ </matchup>
+ <matchup kickoff="1731261600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DEN" isHome="0" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="8.5"/>
+ <team id="KCC" isHome="1" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-8.5"/>
+ </matchup>
+ <matchup kickoff="1731261600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PIT" isHome="0" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="WAS" isHome="1" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1731261600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NEP" isHome="0" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="CHI" isHome="1" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ <matchup kickoff="1731261600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SFO" isHome="0" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-6"/>
+ <team id="TBB" isHome="1" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="6.0"/>
+ </matchup>
+ <matchup kickoff="1731261600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ATL" isHome="0" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 14/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="NOS" isHome="1" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1731272700" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TEN" isHome="0" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="7.5"/>
+ <team id="LAC" isHome="1" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ </matchup>
+ <matchup kickoff="1731273900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PHI" isHome="0" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ <team id="DAL" isHome="1" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="7.5"/>
+ </matchup>
+ <matchup kickoff="1731273900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYJ" isHome="0" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="1"/>
+ <team id="ARI" isHome="1" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="-1.0"/>
+ </matchup>
+ <matchup kickoff="1731288000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DET" isHome="0" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="HOU" isHome="1" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1731374100" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIA" isHome="0" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="LAR" isHome="1" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="11" lastUpdate="1730888932">
+ <matchup kickoff="1731633300" gameSecondsRemaining="3600" status="SCHED">
+ <team id="WAS" isHome="0" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ <team id="PHI" isHome="1" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="3"/>
+ </matchup>
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LVR" isHome="0" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="11.5"/>
+ <team id="MIA" isHome="1" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-11.5"/>
+ </matchup>
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LAR" isHome="0" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="1.0"/>
+ <team id="NEP" isHome="1" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread=""/>
+ </matchup>
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="IND" isHome="0" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread=""/>
+ <team id="NYJ" isHome="1" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="6.5"/>
+ </matchup>
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIN" isHome="0" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="TEN" isHome="1" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="6.5"/>
+ </matchup>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 15/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="BAL" isHome="0" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="PIT" isHome="1" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="4"/>
+ </matchup>
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="GBP" isHome="0" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="3.0"/>
+ <team id="CHI" isHome="1" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="10"/>
+ </matchup>
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="JAC" isHome="0" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ <team id="DET" isHome="1" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-10.0"/>
+ </matchup>
+ <matchup kickoff="1731866400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CLE" isHome="0" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="-4.0"/>
+ <team id="NOS" isHome="1" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread=""/>
+ </matchup>
+ <matchup kickoff="1731877500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ATL" isHome="0" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread=""/>
+ <team id="DEN" isHome="1" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1731877500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SEA" isHome="0" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-1"/>
+ <team id="SFO" isHome="1" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-10.5"/>
+ </matchup>
+ <matchup kickoff="1731878700" gameSecondsRemaining="3600" status="SCHED">
+ <team id="KCC" isHome="0" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ <team id="BUF" isHome="1" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ <matchup kickoff="1731892800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CIN" isHome="0" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="LAC" isHome="1" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-3"/>
+ </matchup>
+ <matchup kickoff="1731978900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="HOU" isHome="0" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ <team id="DAL" isHome="1" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-10.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="12" lastUpdate="1730888932">
+ <matchup kickoff="1732238100" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PIT" isHome="0" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="CLE" isHome="1" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1732471200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DET" isHome="0" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 16/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="IND" isHome="1" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1732471200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NEP" isHome="0" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="MIA" isHome="1" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ </matchup>
+ <matchup kickoff="1732471200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TBB" isHome="0" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="NYG" isHome="1" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1732471200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DAL" isHome="0" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-10.5"/>
+ <team id="WAS" isHome="1" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="10.5"/>
+ </matchup>
+ <matchup kickoff="1732471200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIN" isHome="0" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="CHI" isHome="1" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1732471200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="KCC" isHome="0" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ <team id="CAR" isHome="1" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="4"/>
+ </matchup>
+ <matchup kickoff="1732471200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TEN" isHome="0" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="-4.0"/>
+ <team id="HOU" isHome="1" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1732482300" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DEN" isHome="0" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="LVR" isHome="1" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="9.5"/>
+ </matchup>
+ <matchup kickoff="1732483500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ARI" isHome="0" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="SEA" isHome="1" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="7.0"/>
+ </matchup>
+ <matchup kickoff="1732483500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SFO" isHome="0" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-7"/>
+ <team id="GBP" isHome="1" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="7.5"/>
+ </matchup>
+ <matchup kickoff="1732497600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PHI" isHome="0" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="LAR" isHome="1" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1732583700" gameSecondsRemaining="3600" status="SCHED">
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 17/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="BAL" isHome="0" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-4"/>
+ <team id="LAC" isHome="1" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="4.0"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="13" lastUpdate="1730888932">
+ <matchup kickoff="1732815000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CHI" isHome="0" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread=""/>
+ <team id="DET" isHome="1" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ <matchup kickoff="1732829400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYG" isHome="0" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread=""/>
+ <team id="DAL" isHome="1" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-9.0"/>
+ </matchup>
+ <matchup kickoff="1732843200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIA" isHome="0" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ <team id="GBP" isHome="1" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="6.5"/>
+ </matchup>
+ <matchup kickoff="1732910400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LVR" isHome="0" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread=""/>
+ <team id="KCC" isHome="1" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ </matchup>
+ <matchup kickoff="1733076000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="IND" isHome="0" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-2"/>
+ <team id="NEP" isHome="1" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="6.0"/>
+ </matchup>
+ <matchup kickoff="1733076000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SEA" isHome="0" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="9"/>
+ <team id="NYJ" isHome="1" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1733076000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PIT" isHome="0" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ <team id="CIN" isHome="1" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="7.5"/>
+ </matchup>
+ <matchup kickoff="1733076000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="HOU" isHome="0" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="JAC" isHome="1" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ </matchup>
+ <matchup kickoff="1733076000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TEN" isHome="0" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="2.0"/>
+ <team id="WAS" isHome="1" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="9.5"/>
+ </matchup>
+ <matchup kickoff="1733076000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ARI" isHome="0" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="5.5"/>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 18/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="MIN" isHome="1" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread=""/>
+ </matchup>
+ <matchup kickoff="1733076000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LAC" isHome="0" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-6"/>
+ <team id="ATL" isHome="1" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-3"/>
+ </matchup>
+ <matchup kickoff="1733087100" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TBB" isHome="0" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ <team id="CAR" isHome="1" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="5.5"/>
+ </matchup>
+ <matchup kickoff="1733087100" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LAR" isHome="0" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ <team id="NOS" isHome="1" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="4.5"/>
+ </matchup>
+ <matchup kickoff="1733088300" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PHI" isHome="0" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="BAL" isHome="1" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread=""/>
+ </matchup>
+ <matchup kickoff="1733102400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SFO" isHome="0" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="BUF" isHome="1" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread=""/>
+ </matchup>
+ <matchup kickoff="1733188500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CLE" isHome="0" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="4.5"/>
+ <team id="DEN" isHome="1" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="14" lastUpdate="1730888932">
+ <matchup kickoff="1733447700" gameSecondsRemaining="3600" status="SCHED">
+ <team id="GBP" isHome="0" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ <team id="DET" isHome="1" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-3"/>
+ </matchup>
+ <matchup kickoff="1733680800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYJ" isHome="0" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="MIA" isHome="1" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-13.5"/>
+ </matchup>
+ <matchup kickoff="1733680800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="JAC" isHome="0" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="TEN" isHome="1" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="13.5"/>
+ </matchup>
+ <matchup kickoff="1733680800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CLE" isHome="0" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="PIT" isHome="1" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ </matchup>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 19/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <matchup kickoff="1733680800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NOS" isHome="0" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ <team id="NYG" isHome="1" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="6.5"/>
+ </matchup>
+ <matchup kickoff="1733680800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CAR" isHome="0" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="PHI" isHome="1" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1733680800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ATL" isHome="0" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="MIN" isHome="1" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-3"/>
+ </matchup>
+ <matchup kickoff="1733680800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LVR" isHome="0" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="3.0"/>
+ <team id="TBB" isHome="1" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1733691900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SEA" isHome="0" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="10.5"/>
+ <team id="ARI" isHome="1" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread=""/>
+ </matchup>
+ <matchup kickoff="1733693100" gameSecondsRemaining="3600" status="SCHED">
+ <team id="BUF" isHome="0" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="LAR" isHome="1" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="7.5"/>
+ </matchup>
+ <matchup kickoff="1733693100" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CHI" isHome="0" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="3.0"/>
+ <team id="SFO" isHome="1" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-10.5"/>
+ </matchup>
+ <matchup kickoff="1733707200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LAC" isHome="0" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="KCC" isHome="1" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1733793300" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CIN" isHome="0" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="DAL" isHome="1" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="15" lastUpdate="1730888932">
+ <matchup kickoff="1734052500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LAR" isHome="0" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ <team id="SFO" isHome="1" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-13.5"/>
+ </matchup>
+ <matchup kickoff="1734285600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="KCC" isHome="0" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ 20/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="CLE" isHome="1" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1734285600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CIN" isHome="0" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="TEN" isHome="1" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1734285600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYJ" isHome="0" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="8.5"/>
+ <team id="JAC" isHome="1" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1734285600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="BAL" isHome="0" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="NYG" isHome="1" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="5.5"/>
+ </matchup>
+ <matchup kickoff="1734285600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DAL" isHome="0" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="CAR" isHome="1" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1734285600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="WAS" isHome="0" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="NOS" isHome="1" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1734285600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIA" isHome="0" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-8.5"/>
+ <team id="HOU" isHome="1" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1734297900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="IND" isHome="0" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="DEN" isHome="1" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="4.5"/>
+ </matchup>
+ <matchup kickoff="1734297900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TBB" isHome="0" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="LAC" isHome="1" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="3"/>
+ </matchup>
+ <matchup kickoff="1734297900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PIT" isHome="0" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="PHI" isHome="1" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1734297900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NEP" isHome="0" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="9.5"/>
+ <team id="ARI" isHome="1" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="13.5"/>
+ </matchup>
+ <matchup kickoff="1734297900" gameSecondsRemaining="3600" status="SCHED">
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 21/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="BUF" isHome="0" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="DET" isHome="1" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ <matchup kickoff="1734312000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="GBP" isHome="0" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ <team id="SEA" isHome="1" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1734397200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CHI" isHome="0" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="MIN" isHome="1" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1734399000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ATL" isHome="0" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="LVR" isHome="1" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="16" lastUpdate="1730888932">
+ <matchup kickoff="1734657300" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CLE" isHome="0" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="CIN" isHome="1" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1734804000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="HOU" isHome="0" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="KCC" isHome="1" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-10.0"/>
+ </matchup>
+ <matchup kickoff="1734816600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PIT" isHome="0" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="BAL" isHome="1" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread="5.5"/>
+ </matchup>
+ <matchup kickoff="1734890400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NEP" isHome="0" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="6.5"/>
+ <team id="BUF" isHome="1" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-10.5"/>
+ </matchup>
+ <matchup kickoff="1734890400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TEN" isHome="0" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="IND" isHome="1" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ </matchup>
+ <matchup kickoff="1734890400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LAR" isHome="0" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-4.0"/>
+ <team id="NYJ" isHome="1" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1734890400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="PHI" isHome="0" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-10.5"/>
+ 22/26
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="WAS" isHome="1" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="3"/>
+ </matchup>
+ <matchup kickoff="1734890400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DET" isHome="0" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="CHI" isHome="1" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ <matchup kickoff="1734890400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYG" isHome="0" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="10.5"/>
+ <team id="ATL" isHome="1" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1734890400" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ARI" isHome="0" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="4.5"/>
+ <team id="CAR" isHome="1" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="4.5"/>
+ </matchup>
+ <matchup kickoff="1734901500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DEN" isHome="0" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ <team id="LAC" isHome="1" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="10.5"/>
+ </matchup>
+ <matchup kickoff="1734901500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIN" isHome="0" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="3.0"/>
+ <team id="SEA" isHome="1" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1734902700" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SFO" isHome="0" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ <team id="MIA" isHome="1" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ </matchup>
+ <matchup kickoff="1734902700" gameSecondsRemaining="3600" status="SCHED">
+ <team id="JAC" isHome="0" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="LVR" isHome="1" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="10"/>
+ </matchup>
+ <matchup kickoff="1734916800" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TBB" isHome="0" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="DAL" isHome="1" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1735002900" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NOS" isHome="0" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="4"/>
+ <team id="GBP" isHome="1" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="17" lastUpdate="1730888932">
+ <matchup kickoff="1735149600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="KCC" isHome="0" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-7.5"/>
+ <team id="PIT" isHome="1" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 23/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <matchup kickoff="1735162200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="BAL" isHome="0" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ <team id="HOU" isHome="1" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1735262100" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SEA" isHome="0" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="CHI" isHome="1" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYJ" isHome="0" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="7"/>
+ <team id="BUF" isHome="1" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-11.5"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LAC" isHome="0" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="NEP" isHome="1" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="11.5"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DEN" isHome="0" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ <team id="CIN" isHome="1" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="7.5"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="TEN" isHome="0" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="JAC" isHome="1" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="-7.0"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="IND" isHome="0" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ <team id="NYG" isHome="1" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="6.5"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ATL" isHome="0" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="WAS" isHome="1" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="13.5"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="GBP" isHome="0" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="MIN" isHome="1" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CAR" isHome="0" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="7"/>
+ <team id="TBB" isHome="1" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="ARI" isHome="0" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="9.5"/>
+ <team id="LAR" isHome="1" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-6.5"/>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 24/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ </matchup>
+ <matchup kickoff="1735495200" gameSecondsRemaining="3600" status="SCHED">
+ <team id="LVR" isHome="0" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="NOS" isHome="1" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1735507500" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DAL" isHome="0" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-6.0"/>
+ <team id="PHI" isHome="1" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ </matchup>
+ <matchup kickoff="1735521600" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIA" isHome="0" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="CLE" isHome="1" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="-7.0"/>
+ </matchup>
+ <matchup kickoff="1735607700" gameSecondsRemaining="3600" status="SCHED">
+ <team id="DET" isHome="0" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="6"/>
+ <team id="SFO" isHome="1" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-13.5"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="18" lastUpdate="1730888932">
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="JAC" isHome="0" score="" rushDefenseRank="16" passDefenseRank="31"
+ rushOffenseRank="22" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ <team id="IND" isHome="1" score="" rushDefenseRank="31" passDefenseRank="26"
+ rushOffenseRank="16" passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="BUF" isHome="0" score="" rushDefenseRank="15" passDefenseRank="16"
+ rushOffenseRank="17" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="NEP" isHome="1" score="" rushDefenseRank="26" passDefenseRank="22"
+ rushOffenseRank="24" passOffenseRank="32" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIA" isHome="0" score="" rushDefenseRank="13" passDefenseRank="4" rushOffenseRank="9"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="3.0"/>
+ <team id="NYJ" isHome="1" score="" rushDefenseRank="21" passDefenseRank="2"
+ rushOffenseRank="30" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="HOU" isHome="0" score="" rushDefenseRank="12" passDefenseRank="3"
+ rushOffenseRank="11" passOffenseRank="13" hasPossession="0" inRedZone="0" spread="1.5"/>
+ <team id="TEN" isHome="1" score="" rushDefenseRank="11" passDefenseRank="1"
+ rushOffenseRank="12" passOffenseRank="31" hasPossession="0" inRedZone="0" spread="5.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CIN" isHome="0" score="" rushDefenseRank="18" passDefenseRank="17"
+ rushOffenseRank="27" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ <team id="PIT" isHome="1" score="" rushDefenseRank="4" passDefenseRank="21" rushOffenseRank="8"
+ passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-4"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="KCC" isHome="0" score="" rushDefenseRank="3" passDefenseRank="15"
+ rushOffenseRank="14" passOffenseRank="10" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="DEN" isHome="1" score="" rushDefenseRank="9" passDefenseRank="6" rushOffenseRank="15"
+ passOffenseRank="27" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 25/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ <team id="LAC" isHome="0" score="" rushDefenseRank="8" passDefenseRank="11"
+ rushOffenseRank="20" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="LVR" isHome="1" score="" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="32" passOffenseRank="19" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="WAS" isHome="0" score="" rushDefenseRank="29" passDefenseRank="5" rushOffenseRank="3"
+ passOffenseRank="11" hasPossession="0" inRedZone="0" spread="13.5"/>
+ <team id="DAL" isHome="1" score="" rushDefenseRank="30" passDefenseRank="18"
+ rushOffenseRank="31" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="-13.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NYG" isHome="0" score="" rushDefenseRank="28" passDefenseRank="9"
+ rushOffenseRank="19" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="PHI" isHome="1" score="" rushDefenseRank="5" passDefenseRank="7" rushOffenseRank="2"
+ passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SFO" isHome="0" score="" rushDefenseRank="6" passDefenseRank="14" rushOffenseRank="4"
+ passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="ARI" isHome="1" score="" rushDefenseRank="22" passDefenseRank="24"
+ rushOffenseRank="7" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="3.0"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="MIN" isHome="0" score="" rushDefenseRank="2" passDefenseRank="28"
+ rushOffenseRank="21" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="DET" isHome="1" score="" rushDefenseRank="7" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="15" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CHI" isHome="0" score="" rushDefenseRank="20" passDefenseRank="8"
+ rushOffenseRank="23" passOffenseRank="29" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="GBP" isHome="1" score="" rushDefenseRank="10" passDefenseRank="13"
+ rushOffenseRank="5" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="NOS" isHome="0" score="" rushDefenseRank="25" passDefenseRank="27"
+ rushOffenseRank="13" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ <team id="TBB" isHome="1" score="" rushDefenseRank="19" passDefenseRank="30"
+ rushOffenseRank="10" passOffenseRank="5" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CAR" isHome="0" score="" rushDefenseRank="32" passDefenseRank="25"
+ rushOffenseRank="25" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="ATL" isHome="1" score="" rushDefenseRank="23" passDefenseRank="20"
+ rushOffenseRank="18" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="SEA" isHome="0" score="" rushDefenseRank="27" passDefenseRank="19"
+ rushOffenseRank="28" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-3"/>
+ <team id="LAR" isHome="1" score="" rushDefenseRank="24" passDefenseRank="23"
+ rushOffenseRank="26" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="3.5"/>
+ </matchup>
+ <matchup kickoff="1736100000" gameSecondsRemaining="3600" status="SCHED">
+ <team id="CLE" isHome="0" score="" rushDefenseRank="14" passDefenseRank="12"
+ rushOffenseRank="29" passOffenseRank="28" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="BAL" isHome="1" score="" rushDefenseRank="1" passDefenseRank="32" rushOffenseRank="1"
+ passOffenseRank="3" hasPossession="0" inRedZone="0" spread="4.0"/>
+ </matchup>
+ </nflSchedule>
+ <nflSchedule week="19" lastUpdate="1730888932"/>
+ <nflSchedule week="20" lastUpdate="1730888932"/>
+ <nflSchedule week="21" lastUpdate="1730888932"/>
+ <nflSchedule week="22" lastUpdate="1730888932"/>
+ </fullNflSchedule>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched.xml
+ 26/26
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched_1.xml
+ This XML file does not appear to have any style information associated with it. The document tree is shown
+ below.
+ <nflSchedule week="1" lastUpdate="1730888922">
+ <matchup kickoff="1725582000" gameSecondsRemaining="0" status="FINAL">
+ <team id="BAL" isHome="0" score="20" rushDefenseRank="5" passDefenseRank="28" rushOffenseRank="2"
+ passOffenseRank="5" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="KCC" isHome="1" score="27" rushDefenseRank="29" passDefenseRank="26"
+ rushOffenseRank="26" passOffenseRank="3" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1725668100" gameSecondsRemaining="0" status="FINAL">
+ <team id="GBP" isHome="0" score="29" rushDefenseRank="23" passDefenseRank="25"
+ rushOffenseRank="6" passOffenseRank="7" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="PHI" isHome="1" score="34" rushDefenseRank="25" passDefenseRank="24"
+ rushOffenseRank="8" passOffenseRank="6" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="ARI" isHome="0" score="28" rushDefenseRank="19" passDefenseRank="22"
+ rushOffenseRank="14" passOffenseRank="21" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="BUF" isHome="1" score="34" rushDefenseRank="17" passDefenseRank="10"
+ rushOffenseRank="12" passOffenseRank="9" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="HOU" isHome="0" score="29" rushDefenseRank="14" passDefenseRank="17"
+ rushOffenseRank="1" passOffenseRank="11" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ <team id="IND" isHome="1" score="27" rushDefenseRank="30" passDefenseRank="20"
+ rushOffenseRank="17" passOffenseRank="14" hasPossession="0" inRedZone="0" spread="2.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="JAC" isHome="0" score="17" rushDefenseRank="7" passDefenseRank="30"
+ rushOffenseRank="13" passOffenseRank="23" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="MIA" isHome="1" score="20" rushDefenseRank="18" passDefenseRank="8"
+ rushOffenseRank="24" passOffenseRank="1" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="NEP" isHome="0" score="16" rushDefenseRank="3" passDefenseRank="11" rushOffenseRank="5"
+ passOffenseRank="28" hasPossession="0" inRedZone="0" spread="9.5"/>
+ <team id="CIN" isHome="1" score="10" rushDefenseRank="26" passDefenseRank="3"
+ rushOffenseRank="28" passOffenseRank="20" hasPossession="0" inRedZone="0" spread="-9.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="MIN" isHome="0" score="28" rushDefenseRank="6" passDefenseRank="15"
+ rushOffenseRank="16" passOffenseRank="12" hasPossession="0" inRedZone="0" spread="-1.5"/>
+ <team id="NYG" isHome="1" score="6" rushDefenseRank="15" passDefenseRank="19"
+ rushOffenseRank="25" passOffenseRank="16" hasPossession="0" inRedZone="0" spread="1.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="TEN" isHome="0" score="17" rushDefenseRank="9" passDefenseRank="1" rushOffenseRank="9"
+ passOffenseRank="29" hasPossession="0" inRedZone="0" spread="4.5"/>
+ <team id="CHI" isHome="1" score="24" rushDefenseRank="22" passDefenseRank="2"
+ rushOffenseRank="22" passOffenseRank="30" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="PIT" isHome="0" score="18" rushDefenseRank="10" passDefenseRank="7"
+ rushOffenseRank="11" passOffenseRank="26" hasPossession="0" inRedZone="0" spread="3"/>
+ <team id="ATL" isHome="1" score="10" rushDefenseRank="20" passDefenseRank="5"
+ rushOffenseRank="21" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-3.0"/>
+ </matchup>
+ <matchup kickoff="1725814800" gameSecondsRemaining="0" status="FINAL">
+ <team id="CAR" isHome="0" score="10" rushDefenseRank="28" passDefenseRank="17"
+ rushOffenseRank="30" passOffenseRank="25" hasPossession="0" inRedZone="0" spread="4.5"/>
+ <team id="NOS" isHome="1" score="47" rushDefenseRank="1" passDefenseRank="6" rushOffenseRank="3"
+ passOffenseRank="14" hasPossession="0" inRedZone="0" spread="-4.5"/>
+ </matchup>
+ https://api.myfantasyleague.com/fflnetdynamic2024/nfl_sched_1.xml
+ 1/2
+11/6/24, 6:57 PM
+ api.myfantasyleague.com/fflnetdynamic2024/nfl_sched_1.xml
+ <matchup kickoff="1725825900" gameSecondsRemaining="0" status="FINAL">
+ <team id="LVR" isHome="0" score="10" rushDefenseRank="27" passDefenseRank="9"
+ rushOffenseRank="27" passOffenseRank="8" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="LAC" isHome="1" score="22" rushDefenseRank="4" passDefenseRank="23" rushOffenseRank="4"
+ passOffenseRank="22" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1725825900" gameSecondsRemaining="0" status="FINAL">
+ <team id="DEN" isHome="0" score="20" rushDefenseRank="24" passDefenseRank="12"
+ rushOffenseRank="19" passOffenseRank="27" hasPossession="0" inRedZone="0" spread="5.5"/>
+ <team id="SEA" isHome="1" score="26" rushDefenseRank="12" passDefenseRank="4" rushOffenseRank="7"
+ passOffenseRank="19" hasPossession="0" inRedZone="0" spread="-5.5"/>
+ </matchup>
+ <matchup kickoff="1725827100" gameSecondsRemaining="0" status="FINAL">
+ <team id="DAL" isHome="0" score="33" rushDefenseRank="11" passDefenseRank="7"
+ rushOffenseRank="18" passOffenseRank="17" hasPossession="0" inRedZone="0" spread="2.5"/>
+ <team id="CLE" isHome="1" score="17" rushDefenseRank="13" passDefenseRank="14"
+ rushOffenseRank="20" passOffenseRank="24" hasPossession="0" inRedZone="0" spread="-2.5"/>
+ </matchup>
+ <matchup kickoff="1725827100" gameSecondsRemaining="0" status="FINAL">
+ <team id="WAS" isHome="0" score="20" rushDefenseRank="16" passDefenseRank="27"
+ rushOffenseRank="10" passOffenseRank="18" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="TBB" isHome="1" score="37" rushDefenseRank="21" passDefenseRank="13"
+ rushOffenseRank="15" passOffenseRank="4" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1725841200" gameSecondsRemaining="0" status="FINAL">
+ <team id="LAR" isHome="0" score="20" rushDefenseRank="25" passDefenseRank="18"
+ rushOffenseRank="23" passOffenseRank="2" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="DET" isHome="1" score="26" rushDefenseRank="8" passDefenseRank="29" rushOffenseRank="6"
+ passOffenseRank="13" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ <matchup kickoff="1725927300" gameSecondsRemaining="0" status="FINAL">
+ <team id="NYJ" isHome="0" score="19" rushDefenseRank="28" passDefenseRank="21"
+ rushOffenseRank="29" passOffenseRank="15" hasPossession="0" inRedZone="0" spread="3.5"/>
+ <team id="SFO" isHome="1" score="32" rushDefenseRank="2" passDefenseRank="16" rushOffenseRank="3"
+ passOffenseRank="10" hasPossession="0" inRedZone="0" spread="-3.5"/>
+ </matchup>
+ </nflSchedule>
+ 2/2
