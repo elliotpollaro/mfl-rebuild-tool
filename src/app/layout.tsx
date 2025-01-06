@@ -4,8 +4,8 @@ import { ReactNode } from 'react'
 import { Toaster } from '@/components/ui/toaster'
 
 export const metadata: Metadata = {
-  title: 'Dynasty Trade Calculator',
-  description: 'Calculate and propose dynasty fantasy football trades',
+  title: 'MFL Rebuild Trade Tool',
+  description: 'Propose mass dynasty fantasy football trades',
 }
 
 export default function RootLayout({
